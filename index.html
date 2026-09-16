@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>The Birthday Quest ✨</title>
+
+  <!-- Google Fonts & canvas-confetti -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,600;1,400&family=Manjari:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Ambient Animated Background -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <canvas id="ambient-canvas"></canvas>
+
+  <!-- Background Audio Player -->
+  <audio id="bgm" loop preload="auto">
+    <source src="./assets/music/bgm.mp3" type="audio/mpeg" />
+  </audio>
+
+  <!-- Floating Header / Audio Control & Progress Tracker -->
+  <header class="app-header">
+    <div class="progress-wrap">
+      <div class="progress-info">
+        <span class="quest-title">BIRTHDAY QUEST</span>
+        <span id="stage-text" class="stage-text">Stage 0 of 6</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div id="progress-bar-fill" class="progress-bar-fill"></div>
+      </div>
+    </div>
+
+    <button id="vinyl-btn" class="vinyl-btn paused" aria-label="Toggle Background Music">
+      <div class="vinyl-disc">
+        <div class="vinyl-groove"></div>
+        <div class="vinyl-center"></div>
+      </div>
+      <span class="music-wave">
+        <i></i><i></i><i></i>
+      </span>
+    </button>
+  </header>
+
+  <!-- Main Quest Container -->
+  <main id="app-container">
+
+    <!-- LEVEL 0: The Grand VIP Entry -->
+    <section id="level-0" class="quest-stage active">
+      <div class="glass-card text-center hero-card">
+        <div class="avatar-halo-wrap">
+          <div class="halo-ring"></div>
+          <img src="assets/images/1.png" alt="Birthday Star" class="hero-avatar" />
+        </div>
+        <h1 class="glow-title">Happy Birthday [NAME] ❤️! <span class="sparkle">🎉</span></h1>
+        <p class="hero-desc">നിന്നെപ്പോലൊരു വട്ടിനെെ സഹിക്കാൻ എന്നെപ്പോലെ വലിയൊരു മനസ്സ് തന്നെ വേണം. 
+          ആ പുണ്യപ്രവൃത്തി ഞാൻ ഇനിയും തുടരും... Happy Birthday [NAME]!
+          എന്തൊക്കെ പറഞ്ഞാലും നീയില്ലെങ്കിൽ പിന്നെ ആരെ കളിയാക്കും! എന്റെ പ്രിയപ്പെട്ട [NAME]വിന് 
+          ഹൃദയം നിറഞ്ഞ ജന്മദിനാശംസകൾ! 🎂✨ </p>
+        <p class="hero-desc">
+          ഇന്ന് നിന്റെ ദിനമാണ്! നിനക്കായി ഒരുക്കിയ ചെറിയൊരു രഹസ്യ ലോകത്തേക്ക് സ്വാഗതം.
+          ഓരോ ലെവലും പൂർത്തിയാക്കി ആ രഹസ്യ സമ്മാനം സ്വന്തമാക്കൂ! ✨
+        </p>
+        <button id="start-quest-btn" class="btn btn-primary pulse-btn">
+          <span>Start The Quest 🚀</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- LEVEL 1: Memory Slideshow -->
+    <section id="level-1" class="quest-stage">
+      <div class="glass-card">
+        <div class="stage-tag">Level 1 • Nostalgia</div>
+        <h2 class="stage-heading">ചില സുന്ദര നിമിഷങ്ങൾ 📸</h2>
+        
+        <div class="carousel-container" id="carousel">
+          <div class="carousel-track" id="carousel-track">
+            <div class="carousel-slide active"><img src="assets/images/3.jpg" alt="Memory 1" /></div>
+            <div class="carousel-slide"><img src="assets/images/4.jpg" alt="Memory 2" /></div>
+            <div class="carousel-slide"><img src="assets/images/5.jpg" alt="Memory 3" /></div>
+            <div class="carousel-slide"><img src="assets/images/6.jpg" alt="Memory 4" /></div>
+            <div class="carousel-slide"><img src="assets/images/7.jpg" alt="Memory 5" /></div>
+            <div class="carousel-slide"><img src="assets/images/8.jpg" alt="Memory 6" /></div>
+            <div class="carousel-slide"><img src="assets/images/9.jpg" alt="Memory 7" /></div>
+            <div class="carousel-slide"><img src="assets/images/10.jpg" alt="Memory 8" /></div>
+            <div class="carousel-slide"><img src="assets/images/11.jpg" alt="Memory 9" /></div>
+            <div class="carousel-slide"><img src="assets/images/12.jpg" alt="Memory 10" /></div>
+            <div class="carousel-slide"><img src="assets/images/13.jpg" alt="Memory 11" /></div>
+            <div class="carousel-slide"><img src="assets/images/14.jpg" alt="Memory 12" /></div>
+            <div class="carousel-slide"><img src="assets/images/15.jpg" alt="Memory 13" /></div>
+            <div class="carousel-slide"><img src="assets/images/16.jpg" alt="Memory 14" /></div>
+            <div class="carousel-slide"><img src="assets/images/17.jpg" alt="Memory 15" /></div>
+            <div class="carousel-slide"><img src="assets/images/18.jpg" alt="Memory 16" /></div>
+            <div class="carousel-slide"><img src="assets/images/19.jpg" alt="Memory 17" /></div>
+            <div class="carousel-slide"><img src="assets/images/20.jpg" alt="Memory 18" /></div>
+            <div class="carousel-slide"><img src="assets/images/21.png" alt="Memory 19" /></div>
+            <div class="carousel-slide"><img src="assets/images/22.png" alt="Memory 20" /></div>
+            <div class="carousel-slide"><img src="assets/images/23.png" alt="Memory 21" /></div>
+            <div class="carousel-slide"><img src="assets/images/24.png" alt="Memory 22" /></div>
+           
+          </div>
+          <button class="carousel-nav prev" id="car-prev" aria-label="Previous Slide">&#10094;</button>
+          <button class="carousel-nav next" id="car-next" aria-label="Next Slide">&#10095;</button>
+          <div class="carousel-dots" id="carousel-dots"></div>
+        </div>
+
+        <div class="personal-note-card">
+          <p class="quote-text">"ഓരോ ചിത്രത്തിനും പറയാൻ ഒരു കഥയുണ്ട്... എങ്ങനെയുണ്ട് നമ്മുടെ ഓർമ്മകൾ? ✨"</p>
+           <p class="quote-text">
+          [NAME]... ഇതിപ്പോ കണ്ടപ്പോൾ നീ വിചാരിച്ചിട്ടുണ്ടാവും ഇതിൽ എന്നെക്കാളും കൂടുതൽ ബാക്കി ഞങ്ങളാണല്ലോ എന്ന്! 
+          പക്ഷേ നിന്റെ പിറന്നാൾ നീ മാത്രമായിട്ട് ആഘോഷിച്ചാൽ ശരിയാവില്ലല്ലോ, അതിൽ നമ്മൾ എല്ലാവരും വേണ്ടേ? 
+          അതുകൊണ്ടാണ് എല്ലാവരെയും കൂടി ചേർത്തത്. ഞങ്ങൾക്കൊപ്പം ഉള്ള ഈ ഫ്രെയിം നിനക്ക് എന്തായാലും ഇഷ്ടപ്പെട്ടിട്ടുണ്ടാകും 
+          എന്ന് കരുതുന്നു!</p>
+
+            <p class="quote-text"> പ്രായം ഒരു നമ്പർ മാത്രമാണ് എന്ന് പറയാൻ വരട്ടെ... നിന്റെ കാര്യത്തിൽ ആ നമ്പർ കുറച്ച് ഓവറായി കൂടുന്നുണ്ട് കേട്ടോ അമ്മായിമ്മേ! 
+          എങ്കിലും Happy Birthday[NAME]!   </p>
+          
+        </div>
+
+        <button class="btn btn-primary" onclick="goToLevel(2)">
+          <span>Continue to Challenges ➡️</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- LEVEL 2: Cake Maze 
+    <section id="level-2" class="quest-stage">
+      <div class="glass-card text-center">
+        <div class="stage-tag">Level 2 • Mini-Maze</div>
+        <h2 class="stage-heading">ക്ലിക്കി കേക്കിലേക്ക് എത്തൂ! 🎂</h2>
+        <p class="subtext"></p>
+        
+        <div class="canvas-wrapper">
+          <canvas id="maze-canvas" width="300" height="300"></canvas>
+        </div>
+-->
+        <!-- Touch D-Pad for Mobile Thumb Controls -->
+  <!--      <div class="d-pad">
+          <button class="d-btn up" id="d-up">▲</button>
+          <div class="d-mid-row">
+            <button class="d-btn left" id="d-left">◀</button>
+            <div class="d-center"></div>
+            <button class="d-btn right" id="d-right">▶</button>
+          </div>
+          <button class="d-btn down" id="d-down">▼</button>
+        </div>
+
+        <div id="maze-success-msg" class="celebration-msg hidden">
+          Awesome! കേക്ക് കണ്ടെത്തി! 🍰🎉 എനിക്ക് അറിയാടോ, ഈ കേക്കിന്റെ കൃത്യം സ്പോട്ടിലേക്ക് എത്താൻ 
+          നിന്നെക്കഴിഞ്ഞേ വേറെ ആളുള്ളൂ! വേറെ ആര് വിചാരിച്ചാലും ഇത് ഇത്ര പെർഫെക്റ്റ് ആയി നടക്കില്ല.
+          അതുകൊണ്ട് ആ കേക്ക് ഫുൾ ഒറ്റയ്ക്ക് അകത്താക്കാൻ നോക്കണ്ട, എനിക്കും കൂടെ ഉള്ളതാണ്! 
+          എന്തായാലും എങ്ങനെ ഉണ്ടായിരുന്നു ഞാൻ ഉണ്ടാക്കിയ കേക്ക്? ഇഷ്ടായോ നിനക്ക്?
+        </div>
+      </div>
+    </section>
+-->
+
+<!-- LEVEL 2: Cake Maze -->
+  <section id="level-2" class="quest-stage">
+    <div class="glass-card text-center">
+      <div class="stage-tag">Level 2 • Mini-Maze</div>
+      <h2 class="stage-heading">ക്ലിക്കി കേക്കിലേക്ക് എത്തൂ! 🎂</h2>
+      
+      <!-- വലിയ കുറിപ്പ് മനോഹരമായി വായിക്കാൻ ഒരു കാർഡിലേക്ക് മാറ്റി -->
+      <div class="maze-intro-box">
+        <p>ആ സ്റ്റാർ കൊടുത്തത് സാക്ഷാൽ ക്യാപ്റ്റൻ അമേരിക്ക തന്നെയായിരിക്കും! ഇനി ചെയ്യേണ്ടത് ഇത്രമാത്രം—ആ സ്റ്റാറിന്റെ താഴെ ഒരു ബട്ടൺ കൊടുത്തിട്ടുണ്ട്, 
+          അതിൽ വിരലുവെച്ച് ഞെക്കി ഞെക്കി ആ കേക്ക് അങ്ങോട്ട് എടുത്തോ.</p>
+        <p class="mt-1">പക്ഷേ ഒരു കാര്യമുണ്ട്... പിറന്നാളാണെന്ന് പറഞ്ഞ് ആ കേക്ക് മുഴുവൻ ഒറ്റയ്ക്ക് അടിച്ചുമാറ്റാമെന്ന് വിചാരിക്കണ്ട! 
+          എനിക്കുള്ള ട്രീറ്റിന്റെ പൈസ GPay ആയോ അല്ലാതെയോ ഇങ്ങോട്ട് അയച്ചു തരണം. ചിലവ് ചെയ്യാൻ ഉള്ളതാണ്, അതൊന്നും മറന്നുപോകരുത്!</p>
+        <p class="mt-1">പിന്നെ പണ്ട് ഡിഗ്രിക്ക് പഠിക്കുമ്പോൾ ഉണ്ടായിരുന്നതുപോലെ എല്ലാം ഒറ്റയ്ക്ക് തിന്നുതീർക്കുന്ന ആ പഴയ മൈൻഡ്‌സെറ്റ് ആണ് ഇപ്പൊഴും എങ്കിൽ, 
+          അത് ഇവിടെ നടപ്പില്ല മോളേ... അത് ഞങ്ങൾ സമ്മതിച്ചു തരില്ല! കാര്യം ശ്രദ്ധിച്ചാൽ നിനക്ക് കൊള്ളാം! 🎂😎💸</p>
+      </div>
+      
+      <div class="canvas-wrapper">
+        <canvas id="maze-canvas" width="300" height="300"></canvas>
+      </div>
+
+      <!-- Touch D-Pad for Mobile Thumb Controls -->
+      <div class="d-pad">
+        <button class="d-btn up" id="d-up">▲</button>
+        <div class="d-mid-row">
+          <button class="d-btn left" id="d-left">◀</button>
+          <div class="d-center"></div>
+          <button class="d-btn right" id="d-right">▶</button>
+        </div>
+        <button class="d-btn down" id="d-down">▼</button>
+      </div>
+
+      <!-- കേക്ക് കിട്ടുമ്പോൾ കാണിക്കുന്ന ബോക്സ് + പുതിയ ബട്ടൺ -->
+      <div id="maze-success-msg" class="celebration-msg hidden">
+        <p class="success-text">
+          Awesome! കേക്ക് കണ്ടെത്തി! 🍰🎉<br><br>
+          എനിക്ക് അറിയാടോ, ഈ കേക്കിന്റെ കൃത്യം സ്പോട്ടിലേക്ക് എത്താൻ നിന്നെക്കഴിഞ്ഞേ വേറെ ആളുള്ളൂ!
+          വേറെ ആര് വിചാരിച്ചാലും ഇത് ഇത്ര പെർഫെക്റ്റ് ആയി നടക്കില്ല. 
+          അതുകൊണ്ട് ആ കേക്ക് ഫുൾ ഒറ്റയ്ക്ക് അകത്താക്കാൻ നോക്കണ്ട, എനിക്കും കൂടെ ഉള്ളതാണ്! എന്തായാലും എങ്ങനെ ഉണ്ടായിരുന്നു ഞാൻ ഉണ്ടാക്കിയ കേക്ക്? 
+          ഇഷ്ടായോ നിനക്ക്? ❤️
+        </p>
+
+        <!-- ഈ ബട്ടൺ ക്ലിക്ക് ചെയ്താൽ മാത്രം അടുത്ത ലെവലിലേക്ക് പോകും -->
+        <button id="maze-next-btn" class="btn btn-primary mt-2" onclick="goToLevel(3)">
+          <span>Next Challenge ➡️</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+
+    
+    <!-- LEVEL 3: Sliding Photo Puzzle & Troll Timer -->
+    <section id="level-3" class="quest-stage">
+      <div class="glass-card text-center">
+        <div class="stage-tag">Level 3 • Jigsaw Mystery</div>
+        <h2 class="stage-heading">3x3 Photo Puzzle 🧩</h2>
+        <p class="subtext"> ഇത് വേറൊന്നുമല്ല, നിന്റെ സ്വന്തം ഫോട്ടോ വെച്ചുള്ള ഒരു പസിൽ ആണ്! ഓരോ കഷ്ണവും കറക്റ്റ് സ്ഥലത്ത് വെച്ച് ആ ഫോട്ടോ ഒന്ന് 
+          നേരെയാക്കി എടുത്താൽ മാത്രമേ അടുത്ത പരിപാടിയിലേക്ക് കടക്കാൻ പറ്റൂ. പെട്ടെന്ന് കണ്ടുപിടിക്ക്... 
+          കയ്യിൽ ആകെ 45 മിനിറ്റ്/സെക്കൻഡ് മാത്രമേ സമയമുള്ളൂ! വായിച്ചു നോക്കി സമയം കളയാൻ നിൽക്കണ്ട മോളെ, വേഗം ചെയ്തുതീർക്ക്! ⏱️🧩
+        </p>
+        <div class="timer-badge">
+          <span id="puzzle-timer">⏳ സമയം: 45s</span>
+        </div>
+
+        <div id="puzzle-board" class="puzzle-board"></div>
+
+        <div id="troll-modal" class="modal-overlay hidden">
+          <div class="glass-card modal-box">
+            <div class="troll-icon">😜</div>
+            <h3 class="modal-title">ഇതുവരെ തീർത്തില്ലേ ?what [NAME]....?</h3>
+            <p class="modal-desc">സമയം കഴിഞ്ഞു പോയല്ലോ! ഇനി എന്ത് ചെയ്യാൻ പോകുന്നു?</p>
+            <div class="modal-btn-group">
+              <button class="btn btn-secondary" id="retry-timer-btn">
+                ഒന്നുകൂടി ട്രൈ ചെയ്യണോ? (+1 Min) ⏱️
+              </button>
+              <button class="btn btn-magic" id="auto-solve-btn">
+                ഞാൻ ശരിയാക്കി തരട്ടെ? 🪄
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button id="level3-next-btn" class="btn btn-primary hidden" onclick="goToLevel(4)">
+          <span>Next Level ➡️</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- LEVEL 4: Runaway NO Button -->
+    <section id="level-4" class="quest-stage">
+      <div class="glass-card text-center trap-container">
+        <div class="stage-tag">Level 4 • The Litmus Test</div>
+        <h2 class="stage-heading">സത്യം മാത്രം പറയണം! 🤫</h2>
+        <p class="trap-prompt">
+          ഈ ലോകത്തിൽ നിനക്ക് ഏറ്റവും ഇഷ്ടമുള്ള, ഏറ്റവും അടിപൊളി സുഹൃത്ത് ഞാനാണെന്ന് നീ സമ്മതിക്കുന്നുണ്ടോടീ [NAME]?
+        </p>
+
+        <div class="trap-arena" id="trap-arena">
+          <button id="yes-btn" class="btn btn-yes">YES! തീർച്ചയായും! 😍</button>
+          <button id="no-btn" class="btn btn-no">NO 😜</button>
+        </div>
+
+        <div id="trap-success" class="trap-feedback hidden">
+          <h3>I knew it! സത്യം എപ്പോഴും പുറത്തുവരും! 😍</h3>
+          <p>നീ സമ്മതിച്ച സ്ഥിതിക്ക് അടുത്ത ലെവൽ തുറന്നു തന്നിരിക്കുന്നു!</p>
+          <button class="btn btn-primary mt-2" onclick="goToLevel(5)">
+            <span>Secret Chamber ➡️</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEVEL 5: Morse Code / Spy Decoder -->
+    <section id="level-5" class="quest-stage">
+      <div class="glass-card text-center">
+        <div class="stage-tag">Level 5 • Spy Transmission</div>
+        <h2 class="stage-heading">രഹസ്യ സന്ദേശം 📻</h2>
+        <p class="subtext">[CONTENT]</p>
+        <div class="telegraph-unit">
+          <div id="light-beacon" class="telegraph-light"></div>
+          <div class="morse-waveform" id="morse-wave">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div> 
+
+        <div class="btn-group-center">
+         <button id="play-morse-btn" class="btn btn-secondary">
+            <span>Play Secret Message 🔊</span>
+          </button>
+          <button id="decode-btn" class="btn btn-magic">
+            <span>Decode Message 🔓</span>
+          </button>
+        </div>
+
+        <div id="decoded-card" class="decoded-card hidden">
+          <div class="decoded-label">TRANSLATED MESSAGE:</div>
+          <div class="decoded-body">"YOU ARE IRREPLACEABLE ❤️"</div>
+          <p class="decoded-sub">നമ്മുടെ സൗഹൃദം എന്നും ഇങ്ങനെ തന്നെ നിലനിൽക്കട്ടെ!</p>
+           <div class="decoded-body">"MISS YOU ❤️❤️❤️"</div>
+          <button class="btn btn-primary mt-3" onclick="goToLevel(6)">
+            <span>Final Door ➡️</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEVEL 6: The Grand Finale -->
+    <section id="level-6" class="quest-stage">
+      <div class="glass-card text-center finale-card">
+        <div class="stage-tag">Grand Finale • Celebration</div>
+        <h1 class="glow-title large">Happy Birthday! 🎂</h1>
+
+        <!-- Interactive Candle Cake -->
+        <div class="cake-container" id="cake-container">
+          <div class="cake">
+            <div class="candle" id="candle">
+              <div class="flame" id="flame"></div>
+            </div>
+            <div class="cake-top"></div>
+            <div class="cake-bottom"></div>
+          </div>
+        </div>
+        <p id="candle-hint" class="candle-hint">മെഴുകുതിരിയിൽ തൊട്ട് ഊതിക്കെടുത്തൂ! 🕯️💨</p>
+        <div id="wish-revealed" class="wish-banner hidden">Happy Birthday To You! 🌟</div>
+
+        <!-- Heartfelt Note Card -->
+        <div class="letter-card">
+          <div class="wax-seal">★</div>
+          <h3 class="letter-greeting">പ്രിയ [NAME],</h3>
+          <p class="letter-body">
+            ജീവിതത്തിൽ ഒട്ടനവധി ആളുകളെ നാം കണ്ടുമുട്ടാറുണ്ട്. എന്നാൽ അതിൽ ചിലർ മാത്രമാണ് നമ്മുടെ ജീവിതത്തിൽ മായാത്ത ചിരികളും വെളിച്ചവും ബാക്കിവെയ്ക്കുന്നത്.
+            എന്റെ സന്തോഷങ്ങളിലും പ്രതിസന്ധികളിലും കൂടെ നിന്നതിന് നന്ദി.
+            വരുന്ന ഓരോ വർഷവും നിനക്ക് കൂടുതൽ നേട്ടങ്ങളും ചിരികളും നിറഞ്ഞതായിരിക്കട്ടെ! ഇനിയുമേറെ വർഷങ്ങൾ ഇതുപോലെ നമ്മൾ ആഘോഷിക്കും.
+          </p>
+
+          <p class="letter-body">
+           [YOUR CONTENT]
+          </p>
+          <div class="letter-sign">— എന്നും സ്നേഹത്തോടെ നിന്റെ സ്വന്തം കൂട്ട്. ❤️</div>
+        </div>
+
+        <!-- Polaroid Memories Gallery -->
+        <h3 class="gallery-heading">ഓർമ്മച്ചെപ്പ് 🎞️</h3>
+        <div class="polaroid-grid">
+          <div class="polaroid-item rot-left">
+            <div class="tape-strip"></div>
+            <img src="assets/images/3.jpg" alt="Memory" loading="lazy" />
+            <span>Unfiltered Smiles 😊</span>
+          </div>
+          <div class="polaroid-item rot-right">
+            <div class="tape-strip"></div>
+            <img src="assets/images/4.jpg" alt="Memory" loading="lazy" />
+            <span>The Good Old Days ✨</span>
+          </div>
+          <div class="polaroid-item rot-center">
+            <div class="tape-strip"></div>
+            <img src="assets/images/5.jpg" alt="Memory" loading="lazy" />
+            <span>Pure Happiness 💖</span>
+          </div>
+          <div class="polaroid-item rot-left">
+            <div class="tape-strip"></div>
+            <img src="assets/images/6.jpg" alt="Memory" loading="lazy" />
+            <span>Crazy Vibes 🚀</span>
+          </div>
+        </div>
+
+
+
+
+
+
+        
+        <div class="polaroid-grid">
+          <div class="polaroid-item rot-left">
+            <div class="tape-strip"></div>
+            <img src="assets/images/15.jpg" alt="Memory" loading="lazy" />
+            <span>Unfiltered Smiles 😊</span>
+          </div>
+          <div class="polaroid-item rot-right">
+            <div class="tape-strip"></div>
+            <img src="assets/images/17.jpg" alt="Memory" loading="lazy" />
+            <span>The Good Old Days ✨</span>
+          </div>
+          <div class="polaroid-item rot-center">
+            <div class="tape-strip"></div>
+            <img src="assets/images/12.jpg" alt="Memory" loading="lazy" />
+            <span>Pure Happiness 💖</span>
+          </div>
+          <div class="polaroid-item rot-left">
+            <div class="tape-strip"></div>
+            <img src="assets/images/11.jpg" alt="Memory" loading="lazy" />
+            <span>Crazy Vibes 🚀</span>
+          </div>
+        </div>
+
+        <button class="btn btn-magic replay-btn" onclick="celebrateAgain()">
+          <span>Celebrate Again 🎆</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
