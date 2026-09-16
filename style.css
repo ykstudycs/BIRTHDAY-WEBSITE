@@ -1,0 +1,837 @@
+/* ============================================================
+   1. RESET, CSS VARIABLES & LUXURY BASE STYLING
+   ============================================================ */
+:root {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e1b4b;
+  --card-bg: rgba(30, 41, 59, 0.65);
+  --card-border: rgba(255, 255, 255, 0.12);
+  --neon-pink: #ff4081;
+  --neon-purple: #7c4dff;
+  --neon-amber: #fbbf24;
+  --neon-cyan: #00f2fe;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --safe-padding: 1rem;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: radial-gradient(circle at 10% 10%, #1e1b4b 0%, #0f172a 100%);
+  color: var(--text-main);
+  font-family: 'Outfit', 'Manjari', sans-serif;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ambient canvas & soft glowing blobs */
+#ambient-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-glow {
+  position: fixed;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.35;
+  animation: floatOrb 12s ease-in-out infinite alternate;
+}
+.glow-1 { top: -60px; left: -40px; background: var(--neon-purple); }
+.glow-2 { bottom: -60px; right: -40px; background: var(--neon-pink); animation-delay: -6s; }
+
+@keyframes floatOrb {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(60px, 80px) scale(1.15); }
+}
+
+/* ============================================================
+   2. HEADER, VINYL DISC & PROGRESS BAR
+   ============================================================ */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem var(--safe-padding);
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--card-border);
+}
+
+.progress-wrap {
+  flex: 1;
+  margin-right: 1.25rem;
+}
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.35rem;
+}
+.quest-title {
+  background: linear-gradient(90deg, var(--neon-pink), var(--neon-amber));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.stage-text { color: var(--neon-cyan); }
+
+.progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--neon-pink), var(--neon-purple), var(--neon-cyan));
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(255, 64, 129, 0.6);
+}
+
+/* Vinyl Audio Button */
+.vinyl-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+.vinyl-disc {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #111;
+  border: 2px solid #333;
+  box-shadow: 0 0 10px rgba(0,0,0,0.8);
+  animation: spinRecord 3s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.vinyl-btn.paused .vinyl-disc {
+  animation-play-state: paused;
+  opacity: 0.6;
+}
+.vinyl-groove {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255,255,255,0.25);
+}
+.vinyl-center {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--neon-pink);
+}
+
+.music-wave {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+.music-wave i {
+  width: 2px;
+  height: 100%;
+  background: var(--neon-amber);
+  border-radius: 2px;
+  animation: waveBar 0.8s ease-in-out infinite alternate;
+}
+.vinyl-btn.paused .music-wave i {
+  animation: none;
+  height: 4px;
+}
+.music-wave i:nth-child(2) { animation-delay: 0.25s; }
+.music-wave i:nth-child(3) { animation-delay: 0.5s; }
+
+@keyframes spinRecord { to { transform: rotate(360deg); } }
+@keyframes waveBar { 0% { height: 3px; } 100% { height: 14px; } }
+
+/* ============================================================
+   3. CONTAINER & GLASSMORPHIC CARDS
+   ============================================================ */
+#app-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 1.25rem var(--safe-padding) 4rem var(--safe-padding);
+}
+
+.quest-stage {
+  display: none;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.quest-stage.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.glass-card {
+  position: relative;
+  background: var(--card-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  padding: 1.5rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.text-center { text-align: center; }
+
+.stage-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(124, 77, 255, 0.2);
+  color: #c4b5fd;
+  border: 1px solid rgba(124, 77, 255, 0.35);
+  margin-bottom: 0.75rem;
+}
+
+.stage-heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #fff, #cbd5e1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.glow-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 1rem 0 0.5rem 0;
+  background: linear-gradient(90deg, #ff4081, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 16px rgba(255, 64, 129, 0.4));
+}
+.glow-title.large { font-size: 2.3rem; }
+
+.subtext {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.95rem 1.5rem;
+  border: none;
+  border-radius: 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  outline: none;
+}
+.btn:active {
+  transform: scale(0.96);
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+  color: #fff;
+  box-shadow: 0 8px 25px rgba(255, 64, 129, 0.35);
+}
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.btn-magic {
+  background: linear-gradient(135deg, #06b6d4, #3b82f6);
+  color: #fff;
+  box-shadow: 0 8px 25px rgba(6, 182, 212, 0.35);
+}
+
+.pulse-btn {
+  animation: pulseGlow 2s infinite;
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 64, 129, 0.5); }
+  50% { box-shadow: 0 0 0 16px rgba(255, 64, 129, 0); }
+}
+
+.hidden { display: none !important; }
+.mt-2 { margin-top: 0.75rem; }
+.mt-3 { margin-top: 1.25rem; }
+
+/* ============================================================
+   4. LEVEL 0: VIP ENTRY
+   ============================================================ */
+.avatar-halo-wrap {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 1.5rem auto 1rem auto;
+}
+.hero-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  position: relative;
+  z-index: 2;
+}
+.halo-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan), var(--neon-amber));
+  z-index: 1;
+  animation: spinRecord 6s linear infinite;
+  filter: blur(4px);
+}
+.hero-desc {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #cbd5e1;
+  margin-bottom: 1.75rem;
+}
+
+/* ============================================================
+   5. LEVEL 1: CAROUSEL & NOTES
+   ============================================================ */
+.carousel-container {
+  position: relative;
+  width: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.carousel-track {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+  width: 100%;
+}
+.carousel-slide {
+  min-width: 100%;
+  aspect-ratio: 4 / 5;
+  position: relative;
+  overflow: hidden;
+}
+.carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: kenBurns 12s infinite alternate;
+}
+@keyframes kenBurns {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.5);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  z-index: 3;
+}
+.carousel-nav.prev { left: 8px; }
+.carousel-nav.next { right: 8px; }
+
+.carousel-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  z-index: 3;
+}
+.car-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  transition: all 0.3s ease;
+}
+.car-dot.active {
+  width: 22px;
+  border-radius: 6px;
+  background: var(--neon-pink);
+}
+
+.personal-note-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid var(--neon-amber);
+  padding: 0.9rem;
+  border-radius: 10px;
+  margin-bottom: 1.25rem;
+}
+.quote-text {
+  font-family: 'Manjari', sans-serif;
+  font-size: 0.95rem;
+  font-style: italic;
+  color: #f1f5f9;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   6. LEVEL 2: MAZE GAME & TOUCH CONTROLS
+   ============================================================ */
+.canvas-wrapper {
+  position: relative;
+  margin: 0 auto 1.25rem auto;
+  width: fit-content;
+  border-radius: 18px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+#maze-canvas {
+  display: block;
+  border-radius: 14px;
+  background: #090d16;
+}
+
+/* Mobile D-Pad Controls */
+.d-pad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0.5rem auto 1rem auto;
+}
+.d-mid-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.d-btn {
+  width: 58px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.d-btn:active {
+  background: var(--neon-purple);
+  transform: scale(0.92);
+}
+.d-center {
+  width: 24px;
+  height: 24px;
+}
+
+.celebration-msg {
+  padding: 0.8rem;
+  border-radius: 14px;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid #10b981;
+  color: #6ee7b7;
+  font-weight: 700;
+}
+
+/* ============================================================
+   7. LEVEL 3: PHOTO PUZZLE & TROLL MODAL
+   ============================================================ */
+.timer-badge {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.puzzle-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  width: 280px;
+  height: 280px;
+  margin: 0 auto 1.25rem auto;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #090d16;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  touch-action: manipulation;
+}
+
+.puzzle-tile {
+  width: 100%;
+  height: 100%;
+  background-size: 280px 280px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  border-radius: 4px;
+}
+.puzzle-tile.empty {
+  background: #090d16 !important;
+  cursor: default;
+}
+.puzzle-tile:not(.empty):active {
+  transform: scale(0.95);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal-box {
+  max-width: 380px;
+  animation: modalPop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+@keyframes modalPop {
+  0% { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.troll-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+.modal-title { font-size: 1.3rem; margin-bottom: 0.5rem; }
+.modal-desc { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem; }
+.modal-btn-group { display: flex; flex-direction: column; gap: 0.65rem; }
+
+/* ============================================================
+   8. LEVEL 4: RUNAWAY TRAP ARENA
+   ============================================================ */
+.trap-prompt {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  margin: 1rem 0;
+  color: #e2e8f0;
+}
+.trap-arena {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  border-radius: 18px;
+  background: rgba(0,0,0,0.25);
+  border: 1px dashed rgba(255,255,255,0.15);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.btn-yes {
+  position: absolute;
+  top: 35%;
+  left: 12%;
+  width: auto;
+  min-width: 130px;
+  background: #10b981;
+  color: #fff;
+}
+.btn-no {
+  position: absolute;
+  top: 35%;
+  right: 12%;
+  width: auto;
+  min-width: 110px;
+  background: #ef4444;
+  color: #fff;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.trap-feedback {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid #10b981;
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+/* ============================================================
+   9. LEVEL 5: MORSE TELEGRAPH
+   ============================================================ */
+.telegraph-unit {
+  margin: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.telegraph-light {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #1e293b;
+  border: 3px solid #475569;
+  transition: all 0.08s ease;
+}
+.telegraph-light.lit {
+  background: var(--neon-amber);
+  box-shadow: 0 0 35px var(--neon-amber), 0 0 60px var(--neon-pink);
+  border-color: #fff;
+}
+.morse-waveform {
+  display: flex;
+  gap: 4px;
+  height: 20px;
+}
+.morse-waveform span {
+  width: 4px;
+  height: 100%;
+  background: #334155;
+  border-radius: 4px;
+}
+.btn-group-center {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.decoded-card {
+  margin-top: 1.25rem;
+  background: rgba(124, 77, 255, 0.15);
+  border: 1px solid var(--neon-purple);
+  border-radius: 16px;
+  padding: 1.25rem;
+  animation: modalPop 0.4s ease;
+}
+.decoded-label { font-size: 0.7rem; letter-spacing: 0.1em; color: var(--neon-cyan); }
+.decoded-body { font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0.5rem 0; }
+.decoded-sub { font-size: 0.85rem; color: #cbd5e1; }
+
+/* ============================================================
+   10. LEVEL 6: CELEBRATION, CAKE & POLAROIDS
+   ============================================================ */
+.cake-container {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.cake {
+  position: relative;
+  width: 120px;
+  height: 80px;
+}
+.cake-bottom {
+  position: absolute;
+  bottom: 0;
+  width: 120px;
+  height: 50px;
+  background: #f472b6;
+  border-radius: 10px 10px 6px 6px;
+  box-shadow: inset 0 -6px 0 rgba(0,0,0,0.15);
+}
+.cake-top {
+  position: absolute;
+  bottom: 38px;
+  left: 10px;
+  width: 100px;
+  height: 24px;
+  background: #fff;
+  border-radius: 10px;
+}
+.candle {
+  position: absolute;
+  bottom: 60px;
+  left: 54px;
+  width: 12px;
+  height: 30px;
+  background: repeating-linear-gradient(45deg, #fbbf24, #fbbf24 4px, #f59e0b 4px, #f59e0b 8px);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.flame {
+  position: absolute;
+  top: -14px;
+  left: 1px;
+  width: 10px;
+  height: 14px;
+  background: #f97316;
+  border-radius: 50% 50% 20% 20%;
+  box-shadow: 0 0 12px #f97316, 0 0 20px #eab308;
+  animation: flicker 0.6s infinite alternate;
+}
+.candle.extinguished .flame {
+  display: none;
+}
+@keyframes flicker {
+  0% { transform: scale(1) rotate(-2deg); opacity: 0.9; }
+  100% { transform: scale(1.15) rotate(2deg); opacity: 1; }
+}
+
+.candle-hint {
+  font-size: 0.85rem;
+  color: var(--neon-amber);
+  margin-bottom: 1rem;
+}
+.wish-banner {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #38bdf8;
+  margin-bottom: 1.5rem;
+  animation: modalPop 0.4s ease;
+}
+
+/* Letter Card */
+.letter-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 1.5rem 1.25rem;
+  text-align: left;
+  margin-bottom: 2rem;
+}
+.wax-seal {
+  position: absolute;
+  top: -12px;
+  right: 20px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #dc2626;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+.letter-greeting {
+  font-size: 1.1rem;
+  font-family: 'Manjari', sans-serif;
+  color: var(--neon-amber);
+  margin-bottom: 0.6rem;
+}
+.letter-body {
+  font-family: 'Manjari', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #e2e8f0;
+}
+.letter-sign {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: #cbd5e1;
+  text-align: right;
+}
+
+/* Polaroid Grid */
+.gallery-heading {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+.polaroid-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 2rem;
+}
+.polaroid-item {
+  position: relative;
+  background: #ffffff;
+  padding: 8px 8px 14px 8px;
+  border-radius: 6px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+  color: #1e293b;
+  transition: transform 0.3s ease;
+}
+.polaroid-item img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.polaroid-item span {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-top: 6px;
+}
+.tape-strip {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(2px);
+  border: 1px dashed rgba(0,0,0,0.15);
+}
+.rot-left { transform: rotate(-3deg); }
+.rot-right { transform: rotate(3deg); }
+.rot-center { transform: rotate(1deg); }
+.polaroid-item:active { transform: scale(1.04) rotate(0deg); z-index: 5; }
+
+.replay-btn {
+  margin-top: 0.5rem;
+}
+
+/* ============================================================
+   11. DESKTOP ADAPTATIONS
+   ============================================================ */
+@media (min-width: 768px) {
+  #app-container {
+    max-width: 640px;
+    padding-top: 2.5rem;
+  }
+  .glass-card {
+    padding: 2.25rem;
+  }
+  .glow-title {
+    font-size: 2.5rem;
+  }
+ 
+}
