@@ -265,15 +265,30 @@ document.getElementById('btn-cancel-crop').addEventListener('click', () => {
    ============================================================ */
 async function uploadToStorage(fileOrBlob, folder = 'uploads') {
   if (!fileOrBlob) return null;
-  if (typeof fileOrBlob === 'string') return fileOrBlob; // Already URL
-  const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-  const { error } = await supabaseClient.storage.from('quest-media').upload(fileName, fileOrBlob);
+  if (typeof fileOrBlob === 'string') return fileOrBlob;
+
+  // യൂണീക് ഫയൽനെയിം ഉണ്ടാക്കുന്നു
+  const ext = fileOrBlob.type ? fileOrBlob.type.split('/')[1] : 'jpg';
+  const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+
+  const { data, error } = await supabaseClient.storage
+    .from('quest-media')
+    .upload(fileName, fileOrBlob, {
+      cacheControl: '3600',
+      upsert: true
+    });
+
   if (error) {
-    console.error('Storage Upload Error:', error);
-    return null;
+    console.error('Storage Upload Detailed Error:', error);
+    throw new Error(`ഇമേജ് അപ്‌ലോഡ് പരാജയപ്പെട്ടു (${folder}): ${error.message}`);
   }
-  const { data } = supabaseClient.storage.from('quest-media').getPublicUrl(fileName);
-  return data.publicUrl;
+
+  // പബ്ലിക് ലിങ്ക് എടുക്കുന്നു
+  const { data: publicUrlData } = supabaseClient.storage
+    .from('quest-media')
+    .getPublicUrl(fileName);
+
+  return publicUrlData.publicUrl;
 }
 
 async function handleFormSubmit(e) {
