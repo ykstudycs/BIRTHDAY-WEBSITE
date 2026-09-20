@@ -1,10 +1,10 @@
 /**
  * ============================================================
- * THE BIRTHDAY QUEST - FULL ENGINE WITH DUAL LINKS & PROPER UPLOADS
+ * THE BIRTHDAY QUEST - FULL ENGINE WITH PROPER UPLOADS & AUDIO FIX
  * ============================================================
  */
 
-// 1. SUPABASE CREDENTIALS (നിങ്ങളുടെ കീകൾ ഉറപ്പാക്കുക)
+// 1. SUPABASE CREDENTIALS (നിങ്ങളുടെ കീകൾ മാറ്റാതെ നൽകുക)
 const SUPABASE_URL = "https://uedytnpsodsgwtcjhjry.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_URIryt2eGjUWVjZlg5qXtQ_viYHrUHC";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -48,19 +48,16 @@ window.addEventListener('DOMContentLoaded', async () => {
   const adminSecret = urlParams.get('admin');
 
   if (questId && adminSecret) {
-    // Mode A: Creator Private Feedback Dashboard
     document.getElementById('creator-view').classList.add('hidden');
     document.getElementById('quest-view').classList.add('hidden');
     document.getElementById('admin-feedback-view').classList.remove('hidden');
     await loadAdminFeedback(questId, adminSecret);
   } else if (questId) {
-    // Mode B: Birthday Star Playing the Quest
     document.getElementById('creator-view').classList.add('hidden');
     document.getElementById('admin-feedback-view').classList.add('hidden');
     document.getElementById('quest-view').classList.remove('hidden');
     await loadQuestData(questId);
   } else {
-    // Mode C: Creator Mode (Building the Quest)
     document.getElementById('creator-view').classList.remove('hidden');
     document.getElementById('admin-feedback-view').classList.add('hidden');
     document.getElementById('quest-view').classList.add('hidden');
@@ -90,8 +87,31 @@ vinylBtn.addEventListener('click', () => {
 function initCreatorView() {
   const presetSelector = document.getElementById('bgm-preset-selector');
   const uploadInput = document.getElementById('in-bgm-file');
+  const previewBtn = document.getElementById('btn-preview-audio');
+  const previewPlayer = document.getElementById('preview-player');
+
+  // Preview Preset Audio
+  previewBtn.addEventListener('click', () => {
+    const selectedUrl = presetSelector.value;
+    if (!selectedUrl) {
+      alert("Please select a preset track first to preview!");
+      return;
+    }
+    if (previewPlayer.paused || previewPlayer.src !== selectedUrl) {
+      previewPlayer.src = selectedUrl;
+      previewPlayer.play();
+      previewBtn.innerText = "⏸️ Pause";
+    } else {
+      previewPlayer.pause();
+      previewBtn.innerText = "▶️ Test";
+    }
+  });
 
   presetSelector.addEventListener('change', () => {
+    if (!previewPlayer.paused) {
+      previewPlayer.pause();
+      previewBtn.innerText = "▶️ Test";
+    }
     if (presetSelector.value !== "") {
       uploadInput.disabled = true;
       uploadInput.value = "";
@@ -107,6 +127,14 @@ function initCreatorView() {
     } else {
       presetSelector.disabled = false;
     }
+  });
+
+  // Expandable Guide Toggle
+  const guideToggleBtn = document.getElementById('btn-toggle-guide');
+  const guideContent = document.getElementById('creator-guide-content');
+  guideToggleBtn.addEventListener('click', () => {
+    guideContent.classList.toggle('hidden');
+    guideToggleBtn.innerText = guideContent.classList.contains('hidden') ? "📖 Read Creator Guide & Steps" : "✖️ Hide Guide";
   });
 
   setupPresetListener('intro-presets', 'in-intro-content', {
@@ -216,7 +244,7 @@ function fillSampleData() {
   renderPreviewGrid(level1Files, document.getElementById('slideshow-preview-grid'));
   renderPreviewGrid(level6Files, document.getElementById('polaroid-preview-grid'));
 
-  document.getElementById('bgm-preset-selector').value = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3";
+  document.getElementById('bgm-preset-selector').value = "https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3";
   document.getElementById('in-bgm-file').disabled = true;
 
   alert("⚡ Sample data filled! Scroll down and click 'Generate Quest Links'.");
@@ -261,13 +289,12 @@ document.getElementById('btn-cancel-crop').addEventListener('click', () => {
 });
 
 /* ============================================================
-   SUPABASE STORAGE UPLOAD & SUBMIT
+   SUPABASE STORAGE UPLOAD & SUBMIT (RELIABLE UPLOADER)
    ============================================================ */
 async function uploadToStorage(fileOrBlob, folder = 'uploads') {
   if (!fileOrBlob) return null;
   if (typeof fileOrBlob === 'string') return fileOrBlob;
 
-  // യൂണീക് ഫയൽനെയിം ഉണ്ടാക്കുന്നു
   const ext = fileOrBlob.type ? fileOrBlob.type.split('/')[1] : 'jpg';
   const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
 
@@ -280,10 +307,9 @@ async function uploadToStorage(fileOrBlob, folder = 'uploads') {
 
   if (error) {
     console.error('Storage Upload Detailed Error:', error);
-    throw new Error(`ഇമേജ് അപ്‌ലോഡ് പരാജയപ്പെട്ടു (${folder}): ${error.message}`);
+    throw new Error(`Upload failed (${folder}): ${error.message}`);
   }
 
-  // പബ്ലിക് ലിങ്ക് എടുക്കുന്നു
   const { data: publicUrlData } = supabaseClient.storage
     .from('quest-media')
     .getPublicUrl(fileName);
@@ -298,7 +324,6 @@ async function handleFormSubmit(e) {
   btn.innerText = 'Creating Quest & Uploading... ⏳';
 
   try {
-    // 1. Upload Hero Image (Custom or Cropped or Default)
     let heroUrl = null;
     if (heroBlob) {
       heroUrl = await uploadToStorage(heroBlob, 'avatars');
@@ -308,7 +333,6 @@ async function handleFormSubmit(e) {
       heroUrl = level1Files[0];
     }
 
-    // 2. Upload Puzzle Image
     let puzzleUrl = null;
     if (puzzleBlob) {
       puzzleUrl = await uploadToStorage(puzzleBlob, 'puzzles');
@@ -318,28 +342,24 @@ async function handleFormSubmit(e) {
       puzzleUrl = level1Files[1];
     }
 
-    // 3. Audio
     let finalBgmUrl = document.getElementById('bgm-preset-selector').value || null;
     const uploadedBgm = document.getElementById('in-bgm-file').files[0];
     if (uploadedBgm) {
       finalBgmUrl = await uploadToStorage(uploadedBgm, 'audio');
     }
 
-    // 4. Slideshow images
     const l1Urls = [];
     for (const f of level1Files) {
       const url = await uploadToStorage(f, 'slideshow');
       if (url) l1Urls.push(url);
     }
 
-    // 5. Polaroids
     const l6Urls = [];
     for (const f of level6Files) {
       const url = await uploadToStorage(f, 'polaroids');
       if (url) l6Urls.push(url);
     }
 
-    // Secret Token for Creator's Private Feedback URL
     const secretToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
 
     const payload = {
@@ -364,12 +384,10 @@ async function handleFormSubmit(e) {
     const { data, error } = await supabaseClient.from('quests').insert([payload]).select().single();
     if (error) throw error;
 
-    // Both URLs
     const baseUrl = `${window.location.origin}${window.location.pathname}`;
     const starUrl = `${baseUrl}?id=${data.id}`;
     const creatorUrl = `${baseUrl}?id=${data.id}&admin=${secretToken}`;
 
-    // Populate Modal
     document.getElementById('star-link-input').value = starUrl;
     document.getElementById('creator-link-input').value = creatorUrl;
 
@@ -403,7 +421,6 @@ async function loadAdminFeedback(questId, adminSecret) {
   const container = document.getElementById('feedback-records-container');
   const welcome = document.getElementById('admin-welcome-text');
 
-  // Verify secret token
   const { data: qData, error: qErr } = await supabaseClient
     .from('quests')
     .select('star_name, sender_name, secret_token')
@@ -418,7 +435,6 @@ async function loadAdminFeedback(questId, adminSecret) {
 
   welcome.innerText = `Responses for ${qData.star_name}'s Quest (Created by ${qData.sender_name})`;
 
-  // Fetch feedbacks
   const { data: fbList, error: fbErr } = await supabaseClient
     .from('quest_feedbacks')
     .select('*')
@@ -525,6 +541,13 @@ function bindQuestToDOM() {
         <img src="${url}" onerror="this.src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'"/>
         <span class="polaroid-caption">${cap}</span>
       </div>`;
+  });
+
+  // Setup Feedback Quick Preset Chips
+  document.querySelectorAll('.fb-chip').forEach(chip => {
+    chip.onclick = () => {
+      document.getElementById('feedback-text').value = chip.innerText;
+    };
   });
 
   initAmbientDust();
@@ -687,7 +710,6 @@ function onTileClick(index) {
   }
 }
 
-// "Let me fix it for you" magic solve button
 document.getElementById('auto-solve-btn').addEventListener('click', () => {
   puzzleState = [0, 1, 2, 3, 4, 5, 6, 7, 8];
   puzzleSolved = true;
@@ -704,7 +726,7 @@ document.getElementById('retry-timer-btn').addEventListener('click', () => {
 });
 
 /* ============================================================
-   LEVEL 4: CONTROLLED RUNAWAY NO & VISIBLE SELECTION
+   LEVEL 4: RUNAWAY NO & VISIBLE SELECTION
    ============================================================ */
 const noBtn = document.getElementById('no-btn');
 const yesBtn = document.getElementById('yes-btn');
@@ -730,7 +752,7 @@ yesBtn.addEventListener('click', () => {
 });
 
 /* ============================================================
-   LEVEL 5: MORSE CODE 50% MATCH VERIFIER
+   LEVEL 5: MORSE CODE VERIFICATION
    ============================================================ */
 function initMorseVerification(secretWord) {
   decodeAttempts = 3;
@@ -792,7 +814,7 @@ function calculateSimilarity(str1, str2) {
 }
 
 /* ============================================================
-   LEVEL 6: CANDLE & FEEDBACK SAVER (SUPABASE ONLY)
+   LEVEL 6: CANDLE & FEEDBACK SAVER WITH AUTO-CLEAR
    ============================================================ */
 const candle = document.getElementById('candle');
 candle.addEventListener('click', () => {
@@ -805,11 +827,11 @@ candle.addEventListener('click', () => {
   }
 });
 
-// Feedback is directly saved to Supabase (viewable in the Private link)
 document.getElementById('btn-send-feedback').addEventListener('click', async () => {
-  const fText = document.getElementById('feedback-text').value;
+  const fTextArea = document.getElementById('feedback-text');
+  const fText = fTextArea.value.trim();
   const btn = document.getElementById('btn-send-feedback');
-  if (!fText.trim()) return;
+  if (!fText) return;
 
   btn.disabled = true;
   btn.innerText = 'Sending Reply... ⏳';
@@ -822,6 +844,13 @@ document.getElementById('btn-send-feedback').addEventListener('click', async () 
   if (!error) {
     document.getElementById('feedback-status').classList.remove('hidden');
     btn.innerText = 'Sent Successfully! ❤️';
+    
+    setTimeout(() => {
+      fTextArea.value = '';
+      btn.disabled = false;
+      btn.innerText = 'Send Another Reply 🚀';
+    }, 1500);
+
   } else {
     btn.disabled = false;
     btn.innerText = 'Retry 🚀';
