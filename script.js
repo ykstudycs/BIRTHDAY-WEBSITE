@@ -1,194 +1,307 @@
 /**
  * ============================================================
- * THE BIRTHDAY QUEST SPA - MAIN CONTROLLER
+ * THE BIRTHDAY QUEST - FULL ENGINE & DYNAMIC CREATOR
  * ============================================================
  */
 
-// Global State
+// 1. SUPABASE CREDENTIALS (നിങ്ങളുടെ Supabase Keys ഇവിടെ നൽകുക)
+const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_ID.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// State Variables
 let currentLevel = 0;
 const totalLevels = 6;
+let questData = null;
+let cropperInstance = null;
+let activeCropCallback = null;
 
-// Audio System Elements
-const bgm = document.getElementById('bgm');
-const vinylBtn = document.getElementById('vinyl-btn');
-let audioStarted = false;
+// Temporary Arrays for Uploads
+let level1Files = [];
+let level6Files = [];
 
-/* ============================================================
-   1. AMBIENT FLOATING DUST PARTICLES (Canvas)
-   ============================================================ */
-const ambCanvas = document.getElementById('ambient-canvas');
-const ambCtx = ambCanvas.getContext('2d');
-let particles = [];
-
-function resizeAmbCanvas() {
-  ambCanvas.width = window.innerWidth;
-  ambCanvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeAmbCanvas);
-resizeAmbCanvas();
-
-class Particle {
-  constructor() {
-    this.x = Math.random() * ambCanvas.width;
-    this.y = Math.random() * ambCanvas.height;
-    this.size = Math.random() * 2 + 0.6;
-    this.speedX = Math.random() * 0.4 - 0.2;
-    this.speedY = Math.random() * -0.5 - 0.2;
-    this.alpha = Math.random() * 0.5 + 0.2;
-  }
-  update() {
-    this.x += this.speedX;
-    this.y += this.speedY;
-    if (this.y < 0) this.y = ambCanvas.height;
-    if (this.x < 0) this.x = ambCanvas.width;
-    if (this.x > ambCanvas.width) this.x = 0;
-  }
-  draw() {
-    ambCtx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
-    ambCtx.beginPath();
-    ambCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ambCtx.fill();
-  }
-}
-
-for (let i = 0; i < 45; i++) {
-  particles.push(new Particle());
-}
-
-function animateParticles() {
-  ambCtx.clearRect(0, 0, ambCanvas.width, ambCanvas.height);
-  particles.forEach(p => {
-    p.update();
-    p.draw();
-  });
-  requestAnimationFrame(animateParticles);
-}
-animateParticles();
+// Audio Context for Morse Telegraph
+let audioCtx = null;
 
 /* ============================================================
-   2. AUDIO CONTROLLER & AUTOPLAY UNLOCK
+   ROUTING: BUILDER MODE vs QUEST PLAY MODE
    ============================================================ */
-function startAudio() {
-  if (!audioStarted) {
-    bgm.play().then(() => {
-      audioStarted = true;
-      vinylBtn.classList.remove('paused');
-    }).catch(() => {
-      // Browser autoplay policy prevented initial play
-    });
-  }
-}
+window.addEventListener('DOMContentLoaded', async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const questId = urlParams.get('id');
 
-window.addEventListener('pointerdown', () => {
-  if (!audioStarted) startAudio();
-}, { once: true });
-
-vinylBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  if (bgm.paused) {
-    bgm.play();
-    audioStarted = true;
-    vinylBtn.classList.remove('paused');
+  if (questId) {
+    // Play Mode: Load Quest from Supabase
+    document.getElementById('creator-view').classList.add('hidden');
+    document.getElementById('quest-view').classList.remove('hidden');
+    await loadQuestData(questId);
   } else {
-    bgm.pause();
-    vinylBtn.classList.add('paused');
+    // Creator Mode
+    document.getElementById('creator-view').classList.remove('hidden');
+    document.getElementById('quest-view').classList.add('hidden');
+    initCreatorView();
   }
 });
 
 /* ============================================================
-   3. PROGRESS & NAVIGATION PIPELINE
+   IMAGE CROPPING CONTROLLER (CROPPER.JS)
    ============================================================ */
-function updateProgress(stageNum) {
-  const stageText = document.getElementById('stage-text');
-  const progressFill = document.getElementById('progress-bar-fill');
-  stageText.innerText = `Stage ${stageNum} of ${totalLevels}`;
-  const percentage = (stageNum / totalLevels) * 100;
-  progressFill.style.width = `${percentage}%`;
+function openCropper(file, aspectRatio, callback) {
+  const modal = document.getElementById('crop-modal');
+  const cropImg = document.getElementById('cropping-image');
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    cropImg.src = e.target.result;
+    modal.classList.remove('hidden');
+    if (cropperInstance) cropperInstance.destroy();
+
+    cropperInstance = new Cropper(cropImg, {
+      aspectRatio: aspectRatio,
+      viewMode: 1,
+      autoCropArea: 0.9,
+    });
+    activeCropCallback = callback;
+  };
+  reader.readAsDataURL(file);
 }
 
-function goToLevel(targetLevel) {
-  const currentElem = document.getElementById(`level-${currentLevel}`);
-  const targetElem = document.getElementById(`level-${targetLevel}`);
-  if (!targetElem) return;
-
-  if (currentElem) {
-    currentElem.classList.remove('active');
+document.getElementById('btn-apply-crop').addEventListener('click', () => {
+  if (cropperInstance && activeCropCallback) {
+    cropperInstance.getCroppedCanvas({ maxWidth: 800, maxHeight: 800 }).toBlob((blob) => {
+      activeCropCallback(blob);
+      document.getElementById('crop-modal').classList.add('hidden');
+      cropperInstance.destroy();
+    }, 'image/jpeg', 0.85);
   }
-  targetElem.classList.add('active');
-  currentLevel = targetLevel;
-  updateProgress(targetLevel);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 
-  if (targetLevel === 2) initMazeGame();
-  if (targetLevel === 3) initPuzzleGame();
-  if (targetLevel === 4) initRunawayTrap();
-}
-
-document.getElementById('start-quest-btn').addEventListener('click', () => {
-  startAudio();
-  goToLevel(1);
+document.getElementById('btn-cancel-crop').addEventListener('click', () => {
+  document.getElementById('crop-modal').classList.add('hidden');
+  if (cropperInstance) cropperInstance.destroy();
 });
 
 /* ============================================================
-   4. LEVEL 1: CAROUSEL ENGINE
+   CREATOR MODE CONTROLLER & SUPABASE STORAGE UPLOADER
    ============================================================ */
-const track = document.getElementById('carousel-track');
-const slides = Array.from(track.children);
-const prevBtn = document.getElementById('car-prev');
-const nextBtn = document.getElementById('car-next');
-const dotsNav = document.getElementById('carousel-dots');
-let currentSlideIndex = 0;
+let heroBlob = null;
+let puzzleBlob = null;
 
-slides.forEach((_, idx) => {
-  const dot = document.createElement('div');
-  dot.classList.add('car-dot');
-  if (idx === 0) dot.classList.add('active');
-  dotsNav.appendChild(dot);
-});
-const dots = Array.from(dotsNav.children);
+function initCreatorView() {
+  // Preset selector
+  const presetSelector = document.getElementById('intro-presets');
+  const introArea = document.getElementById('in-intro-content');
+  presetSelector.addEventListener('change', () => {
+    if (presetSelector.value === 'p1') introArea.value = "നിന്നെപ്പോലൊരു വട്ടിനെ സഹിക്കാൻ എന്നെപ്പോലെ വലിയൊരു മനസ്സ് തന്നെ വേണം! ആ പുണ്യപ്രവൃത്തി ഞാൻ ഇനിയും തുടരും... Happy Birthday!";
+    if (presetSelector.value === 'p2') introArea.value = "ഓരോ ചിത്രത്തിനും പറയാൻ ഒരു കഥയുണ്ട്... നമ്മുടെ സൗഹൃദം എന്നും ഇങ്ങനെ തന്നെ തിളങ്ങി നിൽക്കട്ടെ! 🎂✨";
+    if (presetSelector.value === 'p3') introArea.value = "ഇന്ന് നിന്റെ ദിനമാണ്! നിനക്കായി ഒരുക്കിയ ചെറിയൊരു രഹസ്യ ലോകത്തേക്ക് സ്വാഗതം. ലെവലുകൾ പൂർത്തിയാക്കി സമ്മാനം നേടൂ! 🚀";
+  });
 
-function updateCarousel(index) {
-  currentSlideIndex = index;
-  track.style.transform = `translateX(-${index * 100}%)`;
-  dots.forEach(d => d.classList.remove('active'));
-  dots[index].classList.add('active');
+  // Hero Crop (1:1)
+  document.getElementById('in-hero-file').addEventListener('change', (e) => {
+    if (e.target.files[0]) {
+      openCropper(e.target.files[0], 1, (blob) => {
+        heroBlob = blob;
+        const prev = document.getElementById('crop-preview-hero');
+        prev.src = URL.createObjectURL(blob);
+        prev.classList.remove('hidden');
+      });
+    }
+  });
+
+  // Level 1 Multi-file selection & Preview
+  const l1Input = document.getElementById('in-level1-files');
+  const l1Grid = document.getElementById('slideshow-preview-grid');
+  l1Input.addEventListener('change', (e) => {
+    Array.from(e.target.files).forEach(f => level1Files.push(f));
+    renderPreviewGrid(level1Files, l1Grid);
+  });
+
+  // Puzzle Image Crop (1:1)
+  document.getElementById('in-level3-file').addEventListener('change', (e) => {
+    if (e.target.files[0]) {
+      openCropper(e.target.files[0], 1, (blob) => {
+        puzzleBlob = blob;
+        const prev = document.getElementById('crop-preview-puzzle');
+        prev.src = URL.createObjectURL(blob);
+        prev.classList.remove('hidden');
+      });
+    }
+  });
+
+  // Level 6 Polaroids
+  const l6Input = document.getElementById('in-level6-files');
+  const l6Grid = document.getElementById('polaroid-preview-grid');
+  l6Input.addEventListener('change', (e) => {
+    Array.from(e.target.files).forEach(f => level6Files.push(f));
+    renderPreviewGrid(level6Files, l6Grid);
+  });
+
+  // Form Submit
+  document.getElementById('quest-form').addEventListener('submit', handleFormSubmit);
 }
 
-nextBtn.addEventListener('click', () => {
-  let next = currentSlideIndex + 1;
-  if (next >= slides.length) next = 0;
-  updateCarousel(next);
-});
+function renderPreviewGrid(arr, container) {
+  container.innerHTML = '';
+  arr.forEach((file, idx) => {
+    const div = document.createElement('div');
+    div.className = 'preview-item';
+    div.innerHTML = `<img src="${URL.createObjectURL(file)}"/><button type="button" class="btn-del-img">&times;</button>`;
+    div.querySelector('.btn-del-img').addEventListener('click', () => {
+      arr.splice(idx, 1);
+      renderPreviewGrid(arr, container);
+    });
+    container.appendChild(div);
+  });
+}
 
-prevBtn.addEventListener('click', () => {
-  let prev = currentSlideIndex - 1;
-  if (prev < 0) prev = slides.length - 1;
-  updateCarousel(prev);
-});
+// Upload Helper to Supabase Storage
+async function uploadToStorage(fileOrBlob, folder = 'uploads') {
+  if (!fileOrBlob) return null;
+  const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+  const { data, error } = await supabaseClient.storage.from('quest-media').upload(fileName, fileOrBlob);
+  if (error) {
+    console.error('Storage Error:', error);
+    return null;
+  }
+  const { data: publicUrlData } = supabaseClient.storage.from('quest-media').getPublicUrl(fileName);
+  return publicUrlData.publicUrl;
+}
 
-let touchStartX = 0;
-let touchEndX = 0;
-track.addEventListener('touchstart', e => {
-  touchStartX = e.changedTouches[0].screenX;
-}, { passive: true });
-track.addEventListener('touchend', e => {
-  touchEndX = e.changedTouches[0].screenX;
-  if (touchStartX - touchEndX > 50) nextBtn.click();
-  if (touchEndX - touchStartX > 50) prevBtn.click();
-}, { passive: true });
+async function handleFormSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-create-quest');
+  btn.disabled = true;
+  btn.innerText = 'അപ്‌ലോഡ് ചെയ്യുന്നു... ദയവായി കാത്തിരിക്കൂ ⏳';
+
+  try {
+    // 1. Upload Hero Image & Puzzle Image
+    const heroUrl = await uploadToStorage(heroBlob || document.getElementById('in-hero-file').files[0], 'avatars');
+    const puzzleUrl = await uploadToStorage(puzzleBlob || document.getElementById('in-level3-file').files[0], 'puzzles');
+    
+    // 2. Upload BGM
+    let bgmUrl = null;
+    const bgmFile = document.getElementById('in-bgm-file').files[0];
+    if (bgmFile) bgmUrl = await uploadToStorage(bgmFile, 'audio');
+
+    // 3. Upload Level 1 Images
+    const l1Urls = [];
+    for (const f of level1Files) {
+      const url = await uploadToStorage(f, 'slideshow');
+      if (url) l1Urls.push(url);
+    }
+
+    // 4. Upload Level 6 Polaroids
+    const l6Urls = [];
+    for (const f of level6Files) {
+      const url = await uploadToStorage(f, 'polaroids');
+      if (url) l6Urls.push(url);
+    }
+
+    // 5. Insert Record to Supabase
+    const payload = {
+      star_name: document.getElementById('in-star-name').value,
+      sender_name: document.getElementById('in-sender-name').value,
+      sender_email: document.getElementById('in-sender-email').value,
+      hero_image: heroUrl,
+      bgm_url: bgmUrl,
+      intro_content: document.getElementById('in-intro-content').value,
+      level1_images: l1Urls,
+      level1_note: document.getElementById('in-level1-note').value,
+      level2_intro: document.getElementById('in-level2-intro').value,
+      level2_success: document.getElementById('in-level2-success').value,
+      level3_image: puzzleUrl,
+      level3_desc: document.getElementById('in-level3-desc').value,
+      level4_question: document.getElementById('in-level4-question').value,
+      level5_secret_word: (document.getElementById('in-level5-word').value || 'SWEET HEART').toUpperCase(),
+      level6_letter: document.getElementById('in-level6-letter').value,
+      level6_polaroids: l6Urls
+    };
+
+    const { data, error } = await supabaseClient.from('quests').insert([payload]).select().single();
+    if (error) throw error;
+
+    // Generated Link
+    const generatedUrl = `${window.location.origin}${window.location.pathname}?id=${data.id}`;
+    alert(`🎉 നിങ്ങളുടെ ബർത്ത്‌ഡേ ക്വസ്റ്റ് റെഡി!\n\nഈ ലിങ്ക് കോപ്പി ചെയ്ത് സുഹൃത്തിന് അയച്ചു കൊടുക്കൂ:\n${generatedUrl}`);
+    window.location.href = generatedUrl;
+
+  } catch (err) {
+    alert('അപ്‌ലോഡ് ചെയ്യുന്നതിൽ തടസ്സമുണ്ടായി. വീണ്ടും ശ്രമിക്കുക: ' + err.message);
+    btn.disabled = false;
+    btn.innerText = 'Quest ലിങ്ക് ജനറേറ്റ് ചെയ്യുക 🚀';
+  }
+}
 
 /* ============================================================
-   5. LEVEL 2: PHOTO-TOKEN MAZE GAME (FIXED)
+   PLAY MODE: DATA LOADER & LEVEL CONTROLLER
+   ============================================================ */
+async function loadQuestData(id) {
+  const { data, error } = await supabaseClient.from('quests').select('*').eq('id', id).single();
+  if (error || !data) {
+    alert('ക്വസ്റ്റ് കണ്ടെത്താനായില്ല!');
+    return;
+  }
+  questData = data;
+  bindQuestToDOM();
+}
+
+function bindQuestToDOM() {
+  document.getElementById('display-star-name').innerText = questData.star_name;
+  document.getElementById('display-sender-name').innerText = questData.sender_name;
+  document.getElementById('display-intro-content').innerText = questData.intro_content || '';
+  if (questData.hero_image) document.getElementById('display-hero-img').src = questData.hero_image;
+
+  // Custom BGM
+  if (questData.bgm_url) {
+    const bgmElem = document.getElementById('bgm');
+    bgmElem.src = questData.bgm_url;
+  }
+
+  // Level 1 Slideshow Bind
+  const track = document.getElementById('carousel-track');
+  track.innerHTML = '';
+  (questData.level1_images || []).forEach(url => {
+    track.innerHTML += `<div class="carousel-slide"><img src="${url}"/></div>`;
+  });
+  document.getElementById('display-level1-note').innerText = questData.level1_note || '';
+  initCarouselEngine();
+
+  // Level 2 Bind
+  document.getElementById('display-level2-intro').innerText = questData.level2_intro || '';
+  document.getElementById('display-level2-success').innerText = questData.level2_success || '';
+
+  // Level 3 Bind
+  document.getElementById('display-level3-desc').innerText = questData.level3_desc || '';
+
+  // Level 4 Bind
+  document.getElementById('display-level4-question').innerText = questData.level4_question || '';
+
+  // Level 5 Bind
+  document.getElementById('display-secret-word').innerText = `"${questData.level5_secret_word}"`;
+
+  // Level 6 Bind
+  document.getElementById('display-level6-letter').innerText = questData.level6_letter || '';
+  const polGrid = document.getElementById('display-polaroid-grid');
+  polGrid.innerHTML = '';
+  (questData.level6_polaroids || []).forEach(url => {
+    polGrid.innerHTML += `
+      <div class="polaroid-item">
+        <img src="${url}" loading="lazy"/>
+        <span style="font-size:0.75rem;font-weight:bold;margin-top:4px;display:block;">Sweet Memory ❤️</span>
+      </div>`;
+  });
+
+  // Ambient Particles
+  initAmbientDust();
+}
+
+/* ============================================================
+   LEVEL 2: PHOTO RUNNER MAZE ENGINE
    ============================================================ */
 const mazeCanvas = document.getElementById('maze-canvas');
-const mazeCtx = mazeCanvas.getContext('2d');
-
-const tokenImg = new Image();
-tokenImg.src = 'assets/images/1.jpg';
-tokenImg.onload = () => {
-  if (currentLevel === 2) drawMaze();
-};
-
+const mazeCtx = mazeCanvas ? mazeCanvas.getContext('2d') : null;
+const runnerImg = new Image();
 const mazeGrid = [
   [0, 1, 0, 0, 0, 0, 0, 1, 0, 0],
   [0, 1, 0, 1, 1, 1, 0, 1, 0, 1],
@@ -201,276 +314,199 @@ const mazeGrid = [
   [0, 0, 0, 1, 0, 0, 0, 0, 0, 2],
   [1, 1, 0, 0, 0, 1, 1, 1, 1, 1]
 ];
-
-const rows = 10;
-const cols = 10;
-const cellSize = mazeCanvas.width / cols;
 let playerPos = { x: 0, y: 0 };
 let mazeWon = false;
 
-function drawMaze() {
-  mazeCtx.clearRect(0, 0, mazeCanvas.width, mazeCanvas.height);
-
-  // 1. മതിലുകളും കേക്കും വരയ്ക്കുന്നു
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (mazeGrid[r][c] === 1) {
-        mazeCtx.fillStyle = '#1e293b';
-        mazeCtx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
-        mazeCtx.strokeStyle = 'rgba(124, 77, 255, 0.35)';
-        mazeCtx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
-      } else if (mazeGrid[r][c] === 2) {
-        mazeCtx.font = '20px sans-serif';
-        mazeCtx.textAlign = 'center';
-        mazeCtx.textBaseline = 'middle';
-        mazeCtx.fillText('🎂', c * cellSize + cellSize / 2, r * cellSize + cellSize / 2);
-      }
-    }
-  }
-
-  // 2. ക്യാരക്ടർ ടോക്കൺ ഡ്രോയിംഗ്
-  const px = playerPos.x * cellSize + cellSize / 2;
-  const py = playerPos.y * cellSize + cellSize / 2;
-  const radius = (cellSize / 2) - 4;
-
-  mazeCtx.save();
-  mazeCtx.beginPath();
-  mazeCtx.arc(px, py, radius, 0, Math.PI * 2);
-  mazeCtx.closePath();
-
-  if (tokenImg.complete && tokenImg.naturalWidth > 0) {
-    mazeCtx.clip();
-    mazeCtx.drawImage(tokenImg, px - radius, py - radius, radius * 2, radius * 2);
-  } else {
-    mazeCtx.fillStyle = '#ff4081';
-    mazeCtx.fill();
-    mazeCtx.fillStyle = '#ffffff';
-    mazeCtx.font = 'bold 12px sans-serif';
-    mazeCtx.textAlign = 'center';
-    mazeCtx.textBaseline = 'middle';
-    mazeCtx.fillText('★', px, py);
-  }
-  mazeCtx.restore();
-
-  // ചുറ്റുമുള്ള നിയോൺ ഗ്ലോ റിംഗ്
-  mazeCtx.beginPath();
-  mazeCtx.arc(px, py, radius, 0, Math.PI * 2);
-  mazeCtx.lineWidth = 2.5;
-  mazeCtx.strokeStyle = '#00f2fe';
-  mazeCtx.stroke();
-}
-
-function movePlayer(dx, dy) {
-  if (mazeWon) return;
-  const newX = playerPos.x + dx;
-  const newY = playerPos.y + dy;
-
-  if (newX >= 0 && newX < cols && newY >= 0 && newY < rows) {
-    if (mazeGrid[newY][newX] !== 1) {
-      playerPos.x = newX;
-      playerPos.y = newY;
-      drawMaze();
-
-      if (mazeGrid[newY][newX] === 2) {
-        mazeWon = true;
-        const msg = document.getElementById('maze-success-msg');
-        if (msg) msg.classList.remove('hidden');
-        if (typeof confetti === 'function') {
-          confetti({ particleCount: 90, spread: 65, origin: { y: 0.6 } });
-        }
-        //setTimeout(() => goToLevel(3), 1600);
-      }
-    }
-  }
-}
-
 function initMazeGame() {
+  if (questData && questData.hero_image) {
+    runnerImg.src = questData.hero_image;
+  }
   playerPos = { x: 0, y: 0 };
   mazeWon = false;
-  const msg = document.getElementById('maze-success-msg');
-  if (msg) msg.classList.add('hidden');
+  document.getElementById('maze-success-msg').classList.add('hidden');
   drawMaze();
 }
 
-// Keyboard controls
-window.addEventListener('keydown', (e) => {
-  if (currentLevel !== 2) return;
-  if (e.key === 'ArrowUp') movePlayer(0, -1);
-  if (e.key === 'ArrowDown') movePlayer(0, 1);
-  if (e.key === 'ArrowLeft') movePlayer(-1, 0);
-  if (e.key === 'ArrowRight') movePlayer(1, 0);
+function drawMaze() {
+  if (!mazeCtx) return;
+  mazeCtx.clearRect(0, 0, 300, 300);
+  const cellSize = 30;
+
+  for (let r = 0; r < 10; r++) {
+    for (let c = 0; c < 10; c++) {
+      if (mazeGrid[r][c] === 1) {
+        mazeCtx.fillStyle = '#1e293b';
+        mazeCtx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+      } else if (mazeGrid[r][c] === 2) {
+        mazeCtx.font = '18px sans-serif';
+        mazeCtx.textAlign = 'center';
+        mazeCtx.fillText('🎂', c * cellSize + 15, r * cellSize + 20);
+      }
+    }
+  }
+
+  // Draw Avatar Token
+  const px = playerPos.x * cellSize + 15;
+  const py = playerPos.y * cellSize + 15;
+  mazeCtx.save();
+  mazeCtx.beginPath();
+  mazeCtx.arc(px, py, 11, 0, Math.PI * 2);
+  mazeCtx.clip();
+  if (runnerImg.complete && runnerImg.naturalWidth > 0) {
+    mazeCtx.drawImage(runnerImg, px - 11, py - 11, 22, 22);
+  } else {
+    mazeCtx.fillStyle = '#ff4081';
+    mazeCtx.fill();
+  }
+  mazeCtx.restore();
+}
+
+function moveMazePlayer(dx, dy) {
+  if (mazeWon) return;
+  const nx = playerPos.x + dx;
+  const ny = playerPos.y + dy;
+  if (nx >= 0 && nx < 10 && ny >= 0 && ny < 10 && mazeGrid[ny][nx] !== 1) {
+    playerPos.x = nx;
+    playerPos.y = ny;
+    drawMaze();
+    if (mazeGrid[ny][nx] === 2) {
+      mazeWon = true;
+      document.getElementById('maze-success-msg').classList.remove('hidden');
+      confetti({ particleCount: 90, spread: 60 });
+    }
+  }
+}
+
+// Maze Controls
+['d-up', 'd-down', 'd-left', 'd-right'].forEach(id => {
+  const elem = document.getElementById(id);
+  if (elem) {
+    elem.addEventListener('click', () => {
+      if (id === 'd-up') moveMazePlayer(0, -1);
+      if (id === 'd-down') moveMazePlayer(0, 1);
+      if (id === 'd-left') moveMazePlayer(-1, 0);
+      if (id === 'd-right') moveMazePlayer(1, 0);
+    });
+  }
 });
 
-// Touch D-Pad
-document.getElementById('d-up').addEventListener('click', () => movePlayer(0, -1));
-document.getElementById('d-down').addEventListener('click', () => movePlayer(0, 1));
-document.getElementById('d-left').addEventListener('click', () => movePlayer(-1, 0));
-document.getElementById('d-right').addEventListener('click', () => movePlayer(1, 0));
-
 /* ============================================================
-   6. LEVEL 3: 3x3 PHOTO PUZZLE & TROLL TIMER
+   LEVEL 3: PHOTO PUZZLE & TROLL TIMER
    ============================================================ */
-const puzzleBoard = document.getElementById('puzzle-board');
-const timerDisplay = document.getElementById('puzzle-timer');
-const trollModal = document.getElementById('troll-modal');
-const autoSolveBtn = document.getElementById('auto-solve-btn');
-const retryTimerBtn = document.getElementById('retry-timer-btn');
-const nextLevel3Btn = document.getElementById('level3-next-btn');
-
-let puzzleState = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-let countdown = 45;
-let timerInterval = null;
+let puzzleState = [1, 2, 0, 3, 4, 5, 6, 8, 7];
+let timerCountdown = 45;
+let puzzleTimer = null;
 let puzzleSolved = false;
 
-function renderPuzzle() {
-  puzzleBoard.innerHTML = '';
-  puzzleState.forEach((pos, idx) => {
+function initPuzzleGame() {
+  puzzleState = [1, 2, 0, 3, 4, 5, 6, 8, 7];
+  timerCountdown = 45;
+  puzzleSolved = false;
+  document.getElementById('level3-next-btn').classList.add('hidden');
+  document.getElementById('troll-modal').classList.add('hidden');
+  renderPuzzleBoard();
+  clearInterval(puzzleTimer);
+  puzzleTimer = setInterval(() => {
+    timerCountdown--;
+    document.getElementById('puzzle-timer').innerText = `⏳ സമയം: ${timerCountdown}s`;
+    if (timerCountdown <= 0) {
+      clearInterval(puzzleTimer);
+      document.getElementById('troll-modal').classList.remove('hidden');
+    }
+  }, 1000);
+}
+
+function renderPuzzleBoard() {
+  const board = document.getElementById('puzzle-board');
+  board.innerHTML = '';
+  const puzzleImg = questData && questData.level3_image ? questData.level3_image : 'assets/images/2.jpg';
+
+  puzzleState.forEach((val, idx) => {
     const tile = document.createElement('div');
-    tile.classList.add('puzzle-tile');
-    if (pos === 8 && !puzzleSolved) {
+    tile.className = 'puzzle-tile';
+    if (val === 8 && !puzzleSolved) {
       tile.classList.add('empty');
     } else {
-      const row = Math.floor(pos / 3);
-      const col = pos % 3;
-      tile.style.backgroundImage = `url('assets/images/2.jpg')`;
-      tile.style.backgroundPosition = `-${col * (280 / 3)}px -${row * (280 / 3)}px`;
+      const r = Math.floor(val / 3);
+      const c = val % 3;
+      tile.style.backgroundImage = `url('${puzzleImg}')`;
+      tile.style.backgroundPosition = `-${c * 90}px -${r * 90}px`;
     }
     tile.addEventListener('click', () => onTileClick(idx));
-    puzzleBoard.appendChild(tile);
+    board.appendChild(tile);
   });
 }
 
 function onTileClick(index) {
   if (puzzleSolved) return;
-  const blankIndex = puzzleState.indexOf(8);
-  const validMoves = [index - 1, index + 1, index - 3, index + 3];
-
-  const isAdjacent = validMoves.includes(blankIndex) &&
-    !(index % 3 === 0 && blankIndex === index - 1) &&
-    !(index % 3 === 2 && blankIndex === index + 1);
-
-  if (isAdjacent) {
-    [puzzleState[index], puzzleState[blankIndex]] = [puzzleState[blankIndex], puzzleState[index]];
-    renderPuzzle();
-    checkPuzzleSolved();
+  const blank = puzzleState.indexOf(8);
+  const valid = [index - 1, index + 1, index - 3, index + 3];
+  if (valid.includes(blank) && !(index % 3 === 0 && blank === index - 1) && !(index % 3 === 2 && blank === index + 1)) {
+    [puzzleState[index], puzzleState[blank]] = [puzzleState[blank], puzzleState[index]];
+    renderPuzzleBoard();
+    if (puzzleState.every((v, i) => v === i)) {
+      puzzleSolved = true;
+      clearInterval(puzzleTimer);
+      confetti({ particleCount: 100, spread: 70 });
+      document.getElementById('level3-next-btn').classList.remove('hidden');
+      renderPuzzleBoard();
+    }
   }
 }
 
-function checkPuzzleSolved() {
-  const isWon = puzzleState.every((val, index) => val === index);
-  if (isWon) {
-    puzzleSolved = true;
-    clearInterval(timerInterval);
-    if (typeof confetti === 'function') {
-      confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
-    }
-    renderPuzzle();
-    nextLevel3Btn.classList.remove('hidden');
-  }
-}
-
-function startTimer() {
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    countdown--;
-    timerDisplay.innerText = `⏳ സമയം: ${countdown}s`;
-    if (countdown <= 0) {
-      clearInterval(timerInterval);
-      trollModal.classList.remove('hidden');
-    }
-  }, 1000);
-}
-
-function initPuzzleGame() {
-  puzzleState = [1, 2, 0, 3, 4, 5, 6, 8, 7];
-  countdown = 45;
-  puzzleSolved = false;
-  nextLevel3Btn.classList.add('hidden');
-  trollModal.classList.add('hidden');
-  renderPuzzle();
-  startTimer();
-}
-
-retryTimerBtn.addEventListener('click', () => {
-  countdown = 60;
-  trollModal.classList.add('hidden');
-  startTimer();
-});
-
-autoSolveBtn.addEventListener('click', () => {
+document.getElementById('auto-solve-btn').addEventListener('click', () => {
   puzzleState = [0, 1, 2, 3, 4, 5, 6, 7, 8];
   puzzleSolved = true;
-  clearInterval(timerInterval);
-  trollModal.classList.add('hidden');
-  renderPuzzle();
-  if (typeof confetti === 'function') {
-    confetti({ particleCount: 90, spread: 70 });
-  }
-  nextLevel3Btn.classList.remove('hidden');
+  clearInterval(puzzleTimer);
+  document.getElementById('troll-modal').classList.add('hidden');
+  renderPuzzleBoard();
+  document.getElementById('level3-next-btn').classList.remove('hidden');
+});
+
+document.getElementById('retry-timer-btn').addEventListener('click', () => {
+  timerCountdown = 60;
+  document.getElementById('troll-modal').classList.add('hidden');
+  initPuzzleGame();
 });
 
 /* ============================================================
-   7. LEVEL 4: RUNAWAY "NO" BUTTON TRAP
+   LEVEL 4: EXPANDED RUNAWAY NO BUTTON
    ============================================================ */
 const noBtn = document.getElementById('no-btn');
 const yesBtn = document.getElementById('yes-btn');
 const trapArena = document.getElementById('trap-arena');
-const trapSuccess = document.getElementById('trap-success');
 
-function runawayNoButton() {
-  const arenaWidth = trapArena.clientWidth;
-  const arenaHeight = trapArena.clientHeight;
-  const btnWidth = noBtn.offsetWidth;
-  const btnHeight = noBtn.offsetHeight;
-
-  const maxLeft = arenaWidth - btnWidth - 16;
-  const maxTop = arenaHeight - btnHeight - 16;
-
-  const randX = Math.max(10, Math.floor(Math.random() * maxLeft));
-  const randY = Math.max(10, Math.floor(Math.random() * maxTop));
-
-  noBtn.style.left = `${randX}px`;
-  noBtn.style.top = `${randY}px`;
-  noBtn.style.right = 'auto';
+function runawayNo() {
+  const w = trapArena.clientWidth - noBtn.offsetWidth - 20;
+  const h = trapArena.clientHeight - noBtn.offsetHeight - 20;
+  const rx = Math.max(10, Math.floor(Math.random() * w));
+  const ry = Math.max(10, Math.floor(Math.random() * h));
+  noBtn.style.left = `${rx}px`;
+  noBtn.style.top = `${ry}px`;
 }
-
-function initRunawayTrap() {
-  noBtn.style.left = '';
-  noBtn.style.top = '35%';
-  noBtn.style.right = '12%';
-  trapSuccess.classList.add('hidden');
-  yesBtn.style.display = 'inline-block';
-  noBtn.style.display = 'inline-block';
-}
-
-noBtn.addEventListener('mouseover', runawayNoButton);
-noBtn.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  runawayNoButton();
-});
+noBtn.addEventListener('mouseover', runawayNo);
+noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); runawayNo(); });
 
 yesBtn.addEventListener('click', () => {
   yesBtn.style.display = 'none';
   noBtn.style.display = 'none';
-  trapSuccess.classList.remove('hidden');
-  if (typeof confetti === 'function') {
-    confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
-  }
+  document.getElementById('trap-success').classList.remove('hidden');
+  confetti({ particleCount: 90, spread: 60 });
 });
 
 /* ============================================================
-   8. LEVEL 5: MORSE CODE / AUDIO SECRET DECODER
+   LEVEL 5: DYNAMIC TEXT TO MORSE AUDIO & BEACON
    ============================================================ */
-const playMorseBtn = document.getElementById('play-morse-btn');
-const decodeBtn = document.getElementById('decode-btn');
-const lightBeacon = document.getElementById('light-beacon');
-const decodedCard = document.getElementById('decoded-card');
+const MORSE_MAP = {
+  'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+  'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+  'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+  'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+  'Y': '-.--', 'Z': '--..', ' ': ' '
+};
 
-let audioCtx = null;
-function playTelegraphTone(duration) {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
+function playMorseTone(duration) {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = 'sine';
@@ -482,81 +518,145 @@ function playTelegraphTone(duration) {
   osc.stop(audioCtx.currentTime + duration);
 }
 
-const morsePattern = [
-  { tone: 100, wait: 120 },
-  { tone: 100, wait: 120 },
-  { tone: 280, wait: 140 },
-  { tone: 100, wait: 350 },
-  { tone: 100, wait: 120 },
-  { tone: 280, wait: 140 },
-  { tone: 100, wait: 350 },
-  { tone: 100, wait: 120 },
-  { tone: 100, wait: 350 },
-  { tone: 100, wait: 350 },
-  { tone: 280, wait: 140 },
-  { tone: 100, wait: 350 }
-];
+document.getElementById('play-morse-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('play-morse-btn');
+  btn.disabled = true;
+  const light = document.getElementById('light-beacon');
+  const phrase = (questData.level5_secret_word || 'LOVE').toUpperCase();
 
-async function triggerMorseSequence() {
-  playMorseBtn.disabled = true;
-  for (const step of morsePattern) {
-    lightBeacon.classList.add('lit');
-    playTelegraphTone(step.tone / 1000);
-    await new Promise(r => setTimeout(r, step.tone));
-    lightBeacon.classList.remove('lit');
-    await new Promise(r => setTimeout(r, step.wait));
+  for (const char of phrase) {
+    const code = MORSE_MAP[char] || '';
+    for (const symbol of code) {
+      if (symbol === '.') {
+        light.classList.add('lit');
+        playMorseTone(0.1);
+        await new Promise(r => setTimeout(r, 100));
+        light.classList.remove('lit');
+      } else if (symbol === '-') {
+        light.classList.add('lit');
+        playMorseTone(0.3);
+        await new Promise(r => setTimeout(r, 300));
+        light.classList.remove('lit');
+      }
+      await new Promise(r => setTimeout(r, 120));
+    }
+    await new Promise(r => setTimeout(r, 300));
   }
-  playMorseBtn.disabled = false;
-}
+  btn.disabled = false;
+});
 
-playMorseBtn.addEventListener('click', triggerMorseSequence);
-
-decodeBtn.addEventListener('click', () => {
-  decodedCard.classList.remove('hidden');
-  if (typeof confetti === 'function') {
-    confetti({ particleCount: 70, spread: 60 });
-  }
+document.getElementById('decode-btn').addEventListener('click', () => {
+  document.getElementById('decoded-card').classList.remove('hidden');
+  confetti({ particleCount: 70, spread: 50 });
 });
 
 /* ============================================================
-   9. LEVEL 6: CANDLE BLOWOUT & REPLAY
+   LEVEL 6: CANDLE BLOW, FEEDBACK & CELEBRATE AGAIN
    ============================================================ */
 const candle = document.getElementById('candle');
-const candleHint = document.getElementById('candle-hint');
-const wishRevealed = document.getElementById('wish-revealed');
-
 candle.addEventListener('click', () => {
   if (!candle.classList.contains('extinguished')) {
     candle.classList.add('extinguished');
-    candleHint.style.display = 'none';
-    wishRevealed.classList.remove('hidden');
+    document.getElementById('flame').style.display = 'none';
+    document.getElementById('candle-hint').style.display = 'none';
+    document.getElementById('wish-revealed').classList.remove('hidden');
+    confetti({ particleCount: 200, spread: 100 });
+  }
+});
 
-    if (typeof confetti === 'function') {
-      const count = 200;
-      const defaults = { origin: { y: 0.7 } };
+// Feedback Dispatcher to Supabase
+document.getElementById('btn-send-feedback').addEventListener('click', async () => {
+  const fText = document.getElementById('feedback-text').value;
+  if (!fText.trim()) return;
 
-      function fire(particleRatio, opts) {
-        confetti(Object.assign({}, defaults, opts, {
-          particleCount: Math.floor(count * particleRatio)
-        }));
-      }
+  const { error } = await supabaseClient.from('quest_feedbacks').insert([{
+    quest_id: questData.id,
+    feedback_text: fText
+  }]);
 
-      fire(0.25, { spread: 26, startVelocity: 55 });
-      fire(0.2, { spread: 60 });
-      fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-      fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-      fire(0.1, { spread: 120, startVelocity: 45 });
-    }
+  if (!error) {
+    document.getElementById('feedback-status').classList.remove('hidden');
+    document.getElementById('btn-send-feedback').disabled = true;
   }
 });
 
 function celebrateAgain() {
-  if (typeof confetti === 'function') {
-    confetti({
-      particleCount: 150,
-      spread: 100,
-      origin: { y: 0.5 }
-    });
-  }
+  confetti({ particleCount: 150, spread: 80 });
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ============================================================
+   GLOBAL NAVIGATION, AUDIO & PARTICLES
+   ============================================================ */
+function goToLevel(target) {
+  const cur = document.getElementById(`level-${currentLevel}`);
+  const nxt = document.getElementById(`level-${target}`);
+  if (!nxt) return;
+  if (cur) cur.classList.remove('active');
+  nxt.classList.add('active');
+  currentLevel = target;
+  document.getElementById('stage-text').innerText = `Stage ${target} of ${totalLevels}`;
+  document.getElementById('progress-bar-fill').style.width = `${(target / totalLevels) * 100}%`;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (target === 2) initMazeGame();
+  if (target === 3) initPuzzleGame();
+}
+
+document.getElementById('start-quest-btn').addEventListener('click', () => {
+  const bgm = document.getElementById('bgm');
+  bgm.play().then(() => document.getElementById('vinyl-btn').classList.remove('paused')).catch(() => {});
+  goToLevel(1);
+});
+
+// Slideshow Navigation
+function initCarouselEngine() {
+  const track = document.getElementById('carousel-track');
+  const slides = Array.from(track.children);
+  const dotsNav = document.getElementById('carousel-dots');
+  dotsNav.innerHTML = '';
+  let cur = 0;
+
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = `car-dot ${i === 0 ? 'active' : ''}`;
+    dotsNav.appendChild(d);
+  });
+
+  const update = (idx) => {
+    cur = idx;
+    track.style.transform = `translateX(-${idx * 100}%)`;
+    Array.from(dotsNav.children).forEach((d, i) => d.classList.toggle('active', i === idx));
+  };
+
+  document.getElementById('car-next').addEventListener('click', () => update((cur + 1) % slides.length));
+  document.getElementById('car-prev').addEventListener('click', () => update((cur - 1 + slides.length) % slides.length));
+}
+
+// Background Floating Ambient Particles
+function initAmbientDust() {
+  const canvas = document.getElementById('ambient-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  let pts = Array.from({ length: 35 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 2 + 0.5,
+    sy: -Math.random() * 0.4 - 0.2
+  }));
+  function anim() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    pts.forEach(p => {
+      p.y += p.sy;
+      if (p.y < 0) p.y = canvas.height;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    requestAnimationFrame(anim);
+  }
+  anim();
 }
