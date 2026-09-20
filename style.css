@@ -62,6 +62,42 @@ body {
 }
 .btn-sample:hover { background: #e5dac9; }
 
+/* Guide & Info Card */
+.quest-info-card {
+  background: var(--accent-gold-soft);
+  border: 1.5px solid var(--border-light);
+  border-radius: 18px;
+  padding: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+.quest-summary {
+  font-size: 0.88rem;
+  color: #4a3c30;
+  line-height: 1.6;
+}
+.btn-guide-toggle {
+  background: none;
+  border: none;
+  color: var(--accent-gold);
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-top: 8px;
+  padding: 0;
+  text-decoration: underline;
+}
+.guide-details {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-light);
+}
+.guide-steps-list {
+  padding-left: 1.2rem;
+  font-size: 0.83rem;
+  color: #5c4e41;
+  line-height: 1.6;
+}
+
 .section-divider {
   font-size: 0.88rem;
   font-weight: 800;
@@ -107,6 +143,15 @@ body {
 .small-text { font-size: 0.82rem !important; }
 .dim-hint { font-size: 0.78rem; color: #8e8376; margin-top: 4px; display: block; }
 
+/* Audio Wrap & Preview */
+.audio-select-wrap { display: flex; gap: 8px; }
+.btn-audio-preview {
+  padding: 0 16px; border-radius: 12px; background: var(--accent-gold-soft);
+  border: 1.5px solid var(--border-light); color: var(--accent-gold);
+  font-weight: 800; cursor: pointer; white-space: nowrap; transition: 0.2s;
+}
+.btn-audio-preview:hover { background: #ebdccb; }
+
 .preview-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .preview-item {
   position: relative; width: 70px; height: 70px; border-radius: 10px; overflow: hidden; border: 1px solid #ebd8c2;
@@ -135,9 +180,7 @@ body {
 .link-box {
   background: #fdfbf7; border: 1.5px solid var(--border-light); border-radius: 16px; padding: 1rem;
 }
-.private-box {
-  background: #fff8f5; border-color: #f5d0c5;
-}
+.private-box { background: #fff8f5; border-color: #f5d0c5; }
 .link-title { font-size: 0.92rem; font-weight: 800; color: var(--accent-gold); display: block; margin-bottom: 2px; }
 .private-box .link-title { color: #d9534f; }
 .link-desc { font-size: 0.78rem; color: #6b5d50; margin-bottom: 8px; }
@@ -357,11 +400,18 @@ body {
   background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(2px); border: 1px dashed rgba(0,0,0,0.15);
 }
 
+/* Feedback Box & Quick Preset Chips */
 .feedback-card {
   margin-top: 2rem; background: var(--accent-gold-soft); border: 1px solid var(--border-light);
   border-radius: 18px; padding: 1.4rem; text-align: left;
 }
 .feedback-card h4 { color: var(--accent-gold); margin-bottom: 4px; font-weight: 800; }
+.feedback-chips-grid { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.fb-chip {
+  background: #ffffff; border: 1px solid var(--border-light); border-radius: 20px;
+  padding: 5px 12px; font-size: 0.76rem; font-weight: 600; color: #4a3c30; cursor: pointer; transition: 0.2s;
+}
+.fb-chip:hover { background: var(--accent-gold); color: #ffffff; border-color: var(--accent-gold); }
 .feedback-success { color: var(--sage-accent); font-size: 0.9rem; margin-top: 8px; font-weight: 700; }
 
 .hidden { display: none !important; }
