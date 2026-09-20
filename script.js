@@ -5,8 +5,8 @@
  */
 
 // 1. SUPABASE CREDENTIALS (നിങ്ങളുടെ Supabase Keys ഇവിടെ നൽകുക)
-const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_ID.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://uedytnpsodsgwtcjhjry.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_URIryt2eGjUWVjZlg5qXtQ_viYHrUHC";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // State Variables
