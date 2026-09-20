@@ -1,24 +1,15 @@
 /**
  * ============================================================
- * THE BIRTHDAY QUEST - LIGHT THEME ENGINE
+ * THE BIRTHDAY QUEST - FULL ENGINE WITH DUAL LINKS & PROPER UPLOADS
  * ============================================================
  */
 
-// 1. SUPABASE CREDENTIALS
+// 1. SUPABASE CREDENTIALS (നിങ്ങളുടെ കീകൾ ഉറപ്പാക്കുക)
 const SUPABASE_URL = "https://uedytnpsodsgwtcjhjry.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_URIryt2eGjUWVjZlg5qXtQ_viYHrUHC";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 2. EMAILJS CREDENTIALS (Paste your IDs here)
-const EMAILJS_PUBLIC_KEY = "YOUR_EMAILJS_PUBLIC_KEY";
-const EMAILJS_SERVICE_ID = "YOUR_EMAILJS_SERVICE_ID";
-const EMAILJS_TEMPLATE_ID = "YOUR_EMAILJS_TEMPLATE_ID";
-
-if (window.emailjs && EMAILJS_PUBLIC_KEY !== "YOUR_EMAILJS_PUBLIC_KEY") {
-  emailjs.init(EMAILJS_PUBLIC_KEY);
-}
-
-// Global Variables
+// State Variables
 let currentLevel = 0;
 const totalLevels = 6;
 let questData = null;
@@ -29,6 +20,7 @@ const bgm = document.getElementById('bgm');
 const vinylBtn = document.getElementById('vinyl-btn');
 let isAudioPlaying = false;
 
+// Files & Upload Blobs
 let heroBlob = null;
 let puzzleBlob = null;
 let level1Files = [];
@@ -36,7 +28,7 @@ let level6Files = [];
 
 let decodeAttempts = 3;
 
-// Morse Alphabet Map
+// Morse Code Alphabet Map
 const MORSE_MAP = {
   'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
   'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
@@ -48,25 +40,36 @@ const MORSE_MAP = {
 };
 
 /* ============================================================
-   ROUTING
+   ROUTER: CREATOR STUDIO vs PRIVATE DASHBOARD vs QUEST PLAY
    ============================================================ */
 window.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const questId = urlParams.get('id');
+  const adminSecret = urlParams.get('admin');
 
-  if (questId) {
+  if (questId && adminSecret) {
+    // Mode A: Creator Private Feedback Dashboard
     document.getElementById('creator-view').classList.add('hidden');
+    document.getElementById('quest-view').classList.add('hidden');
+    document.getElementById('admin-feedback-view').classList.remove('hidden');
+    await loadAdminFeedback(questId, adminSecret);
+  } else if (questId) {
+    // Mode B: Birthday Star Playing the Quest
+    document.getElementById('creator-view').classList.add('hidden');
+    document.getElementById('admin-feedback-view').classList.add('hidden');
     document.getElementById('quest-view').classList.remove('hidden');
     await loadQuestData(questId);
   } else {
+    // Mode C: Creator Mode (Building the Quest)
     document.getElementById('creator-view').classList.remove('hidden');
+    document.getElementById('admin-feedback-view').classList.add('hidden');
     document.getElementById('quest-view').classList.add('hidden');
     initCreatorView();
   }
 });
 
 /* ============================================================
-   AUDIO PLAY / PAUSE CONTROLLER
+   AUDIO CONTROLLER (PLAY / PAUSE)
    ============================================================ */
 vinylBtn.addEventListener('click', () => {
   if (bgm.paused) {
@@ -82,13 +85,12 @@ vinylBtn.addEventListener('click', () => {
 });
 
 /* ============================================================
-   CREATOR MODE CONTROLLER
+   CREATOR MODE: FORM & DUAL LINK GENERATION
    ============================================================ */
 function initCreatorView() {
   const presetSelector = document.getElementById('bgm-preset-selector');
   const uploadInput = document.getElementById('in-bgm-file');
 
-  // Mutual Exclusive Audio Select
   presetSelector.addEventListener('change', () => {
     if (presetSelector.value !== "") {
       uploadInput.disabled = true;
@@ -107,7 +109,6 @@ function initCreatorView() {
     }
   });
 
-  // Pure English Preset Selectors
   setupPresetListener('intro-presets', 'in-intro-content', {
     en_1: "May your birthday be filled with endless smiles, pure joy, and everything you have ever dreamed of! Happy Birthday!",
     en_2: "It takes an absolute saint to handle someone as crazy as you. Gladly signing up for another year of madness! Happy Birthday!",
@@ -118,22 +119,17 @@ function initCreatorView() {
   setupPresetListener('level1-presets', 'in-level1-note', {
     en_1: "Every picture tells a story of unforgettable laughs, shared moments, and our timeless bond!",
     en_2: "Looking back at these memories reminds me how lucky I am to have an adventure partner like you!",
-    en_3: "A walk down memory lane... So grateful for every chapter we have written together!",
-    en_4: "Frames of pure happiness! Let us promise to make twice as many memories this coming year!"
+    en_3: "A walk down memory lane... So grateful for every chapter we have written together!"
   });
 
   setupPresetListener('level2-presets', 'in-level2-intro', {
     en_1: "Guide your token to the birthday cake! But remember, eating the whole slice alone is strictly forbidden!",
-    en_2: "Navigate the maze! Your birthday treat is at the finish line, so do not let the walls slow you down!",
-    en_3: "A true champion finds their way to the slice in seconds. Show me your gaming reflexes!",
-    en_4: "Let the birthday games begin! Steer your mini avatar directly to that delicious cake!"
+    en_2: "Navigate the maze! Your birthday treat is at the finish line, so do not let the walls slow you down!"
   });
 
   setupPresetListener('level6-presets', 'in-level6-letter', {
     en_1: "In a world of fleeting connections, your presence is a rare and comforting blessing. Thank you for standing by me through thick and thin, for lighting up the darkest days, and for being your wonderfully authentic self. May this year bring you boundless success, health, and limitless joy!",
-    en_2: "Happy Birthday! As another beautiful chapter begins, always remember how deeply you are appreciated and admired. Keep inspiring, keep chasing big dreams, and never lose that bright, contagious spark of yours!",
-    en_3: "Words will always fall short of expressing how much your friendship means to me. Thank you for every unscripted laugh, every heartfelt talk, and for making life ten times more vibrant. Have the most extraordinary birthday!",
-    en_4: "To the person who makes every ordinary moment memorable: Happy Birthday! You deserve all the peace, laughter, and triumph the universe has to offer. Excited for all our adventures ahead!"
+    en_2: "Happy Birthday! As another beautiful chapter begins, always remember how deeply you are appreciated and admired. Keep inspiring, keep chasing big dreams, and never lose that bright, contagious spark of yours!"
   });
 
   // Hero Avatar Crop (1:1)
@@ -148,7 +144,7 @@ function initCreatorView() {
     }
   });
 
-  // Slideshow Multi-select
+  // Level 1 Slideshow Multiple Uploads
   document.getElementById('in-level1-files').addEventListener('change', (e) => {
     Array.from(e.target.files).forEach(f => level1Files.push(f));
     renderPreviewGrid(level1Files, document.getElementById('slideshow-preview-grid'));
@@ -166,16 +162,13 @@ function initCreatorView() {
     }
   });
 
-  // Polaroid Multi-select
+  // Polaroid Multiple Uploads
   document.getElementById('in-level6-files').addEventListener('change', (e) => {
     Array.from(e.target.files).forEach(f => level6Files.push(f));
     renderPreviewGrid(level6Files, document.getElementById('polaroid-preview-grid'));
   });
 
-  // Sample Data Button
   document.getElementById('btn-fill-sample').addEventListener('click', fillSampleData);
-
-  // Form Submission
   document.getElementById('quest-form').addEventListener('submit', handleFormSubmit);
 }
 
@@ -205,7 +198,6 @@ function renderPreviewGrid(arr, container) {
 function fillSampleData() {
   document.getElementById('in-star-name').value = "Jessica";
   document.getElementById('in-sender-name').value = "Arthur";
-  document.getElementById('in-sender-email').value = "arthur.example@gmail.com";
   document.getElementById('in-intro-content').value = "May your birthday be filled with endless smiles, pure joy, and everything you have ever dreamed of! Happy Birthday! ✨";
   document.getElementById('in-level1-note').value = "Every picture tells a story of unforgettable laughs, shared moments, and our timeless bond! 📸";
   document.getElementById('in-level2-intro').value = "Guide your token to the birthday cake! But remember, eating the whole slice alone is strictly forbidden! 🍰";
@@ -227,11 +219,11 @@ function fillSampleData() {
   document.getElementById('bgm-preset-selector').value = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3";
   document.getElementById('in-bgm-file').disabled = true;
 
-  alert("⚡ Sample data filled! Scroll down and click 'Generate Quest Link'.");
+  alert("⚡ Sample data filled! Scroll down and click 'Generate Quest Links'.");
 }
 
 /* ============================================================
-   CROPPER HANDLER
+   CROPPER LOGIC
    ============================================================ */
 function openCropper(file, aspectRatio, callback) {
   const modal = document.getElementById('crop-modal');
@@ -269,11 +261,11 @@ document.getElementById('btn-cancel-crop').addEventListener('click', () => {
 });
 
 /* ============================================================
-   SUPABASE UPLOADER
+   SUPABASE STORAGE UPLOAD & SUBMIT
    ============================================================ */
 async function uploadToStorage(fileOrBlob, folder = 'uploads') {
   if (!fileOrBlob) return null;
-  if (typeof fileOrBlob === 'string') return fileOrBlob;
+  if (typeof fileOrBlob === 'string') return fileOrBlob; // Already URL
   const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
   const { error } = await supabaseClient.storage.from('quest-media').upload(fileName, fileOrBlob);
   if (error) {
@@ -291,34 +283,53 @@ async function handleFormSubmit(e) {
   btn.innerText = 'Creating Quest & Uploading... ⏳';
 
   try {
-    let heroUrl = heroBlob ? await uploadToStorage(heroBlob, 'avatars') : null;
-    if (!heroUrl && typeof level1Files[0] === 'string') heroUrl = level1Files[0];
+    // 1. Upload Hero Image (Custom or Cropped or Default)
+    let heroUrl = null;
+    if (heroBlob) {
+      heroUrl = await uploadToStorage(heroBlob, 'avatars');
+    } else if (document.getElementById('in-hero-file').files[0]) {
+      heroUrl = await uploadToStorage(document.getElementById('in-hero-file').files[0], 'avatars');
+    } else if (typeof level1Files[0] === 'string') {
+      heroUrl = level1Files[0];
+    }
 
-    let puzzleUrl = puzzleBlob ? await uploadToStorage(puzzleBlob, 'puzzles') : null;
-    if (!puzzleUrl && typeof level1Files[1] === 'string') puzzleUrl = level1Files[1];
+    // 2. Upload Puzzle Image
+    let puzzleUrl = null;
+    if (puzzleBlob) {
+      puzzleUrl = await uploadToStorage(puzzleBlob, 'puzzles');
+    } else if (document.getElementById('in-level3-file').files[0]) {
+      puzzleUrl = await uploadToStorage(document.getElementById('in-level3-file').files[0], 'puzzles');
+    } else if (typeof level1Files[1] === 'string') {
+      puzzleUrl = level1Files[1];
+    }
 
+    // 3. Audio
     let finalBgmUrl = document.getElementById('bgm-preset-selector').value || null;
     const uploadedBgm = document.getElementById('in-bgm-file').files[0];
     if (uploadedBgm) {
       finalBgmUrl = await uploadToStorage(uploadedBgm, 'audio');
     }
 
+    // 4. Slideshow images
     const l1Urls = [];
     for (const f of level1Files) {
       const url = await uploadToStorage(f, 'slideshow');
       if (url) l1Urls.push(url);
     }
 
+    // 5. Polaroids
     const l6Urls = [];
     for (const f of level6Files) {
       const url = await uploadToStorage(f, 'polaroids');
       if (url) l6Urls.push(url);
     }
 
+    // Secret Token for Creator's Private Feedback URL
+    const secretToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+
     const payload = {
       star_name: document.getElementById('in-star-name').value,
       sender_name: document.getElementById('in-sender-name').value,
-      sender_email: document.getElementById('in-sender-email').value,
       hero_image: heroUrl || 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500',
       bgm_url: finalBgmUrl,
       intro_content: document.getElementById('in-intro-content').value,
@@ -331,37 +342,95 @@ async function handleFormSubmit(e) {
       level4_question: document.getElementById('in-level4-question').value,
       level5_secret_word: (document.getElementById('in-level5-word').value || 'SWEET HEART').toUpperCase(),
       level6_letter: document.getElementById('in-level6-letter').value,
-      level6_polaroids: l6Urls.length ? l6Urls : ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500']
+      level6_polaroids: l6Urls.length ? l6Urls : ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'],
+      secret_token: secretToken
     };
 
     const { data, error } = await supabaseClient.from('quests').insert([payload]).select().single();
     if (error) throw error;
 
-    const generatedUrl = `${window.location.origin}${window.location.pathname}?id=${data.id}`;
-    const shareModal = document.getElementById('share-modal');
-    const linkInput = document.getElementById('generated-link-input');
-    linkInput.value = generatedUrl;
-    shareModal.classList.remove('hidden');
+    // Both URLs
+    const baseUrl = `${window.location.origin}${window.location.pathname}`;
+    const starUrl = `${baseUrl}?id=${data.id}`;
+    const creatorUrl = `${baseUrl}?id=${data.id}&admin=${secretToken}`;
 
-    document.getElementById('btn-copy-link').onclick = () => {
-      linkInput.select();
-      navigator.clipboard.writeText(generatedUrl);
-      alert('Private link copied to clipboard! 🎉');
+    // Populate Modal
+    document.getElementById('star-link-input').value = starUrl;
+    document.getElementById('creator-link-input').value = creatorUrl;
+
+    document.getElementById('btn-copy-star').onclick = () => {
+      navigator.clipboard.writeText(starUrl);
+      alert('Birthday Star link copied! 🎉 Send this to your friend.');
     };
 
-    document.getElementById('btn-open-quest').onclick = () => {
-      window.location.href = generatedUrl;
+    document.getElementById('btn-copy-creator').onclick = () => {
+      navigator.clipboard.writeText(creatorUrl);
+      alert('Private Feedback link copied! 🔒 Keep this to view their replies.');
     };
+
+    document.getElementById('btn-open-star-quest').onclick = () => {
+      window.location.href = starUrl;
+    };
+
+    document.getElementById('share-modal').classList.remove('hidden');
 
   } catch (err) {
     alert('Upload issue: ' + err.message);
     btn.disabled = false;
-    btn.innerText = 'Generate Quest Link 🚀';
+    btn.innerText = 'Generate Quest Links 🚀';
   }
 }
 
 /* ============================================================
-   PLAY MODE: DATA BINDING
+   ADMIN / CREATOR PRIVATE FEEDBACK LOADER
+   ============================================================ */
+async function loadAdminFeedback(questId, adminSecret) {
+  const container = document.getElementById('feedback-records-container');
+  const welcome = document.getElementById('admin-welcome-text');
+
+  // Verify secret token
+  const { data: qData, error: qErr } = await supabaseClient
+    .from('quests')
+    .select('star_name, sender_name, secret_token')
+    .eq('id', questId)
+    .single();
+
+  if (qErr || !qData || qData.secret_token !== adminSecret) {
+    welcome.innerText = "Access Denied: Invalid private key!";
+    container.innerHTML = `<div class="empty-feedback-card">You do not have permission to view feedback for this quest.</div>`;
+    return;
+  }
+
+  welcome.innerText = `Responses for ${qData.star_name}'s Quest (Created by ${qData.sender_name})`;
+
+  // Fetch feedbacks
+  const { data: fbList, error: fbErr } = await supabaseClient
+    .from('quest_feedbacks')
+    .select('*')
+    .eq('quest_id', questId)
+    .order('created_at', { ascending: false });
+
+  if (fbErr || !fbList || fbList.length === 0) {
+    container.innerHTML = `
+      <div class="empty-feedback-card">
+        <h3>No feedback received yet! 💌</h3>
+        <p class="dim-hint mt-1">When ${qData.star_name} completes the quest and writes a reply, it will appear right here.</p>
+      </div>`;
+  } else {
+    container.innerHTML = '';
+    fbList.forEach((fb, i) => {
+      const time = new Date(fb.created_at).toLocaleString();
+      container.innerHTML += `
+        <div class="feedback-entry-card">
+          <div class="feedback-meta">Reply #${fbList.length - i} • ${time}</div>
+          <div class="feedback-quote">"${fb.feedback_text}"</div>
+        </div>`;
+    });
+  }
+}
+
+/* ============================================================
+   PLAY MODE: DATA BINDING & QUEST RUNNER
    ============================================================ */
 async function loadQuestData(id) {
   const { data, error } = await supabaseClient.from('quests').select('*').eq('id', id).single();
@@ -387,7 +456,7 @@ function bindQuestToDOM() {
     bgm.src = questData.bgm_url;
   }
 
-  // Level 1
+  // Level 1 Slideshow
   const track = document.getElementById('carousel-track');
   track.innerHTML = '';
   const images = (questData.level1_images && questData.level1_images.length) 
@@ -445,112 +514,6 @@ function bindQuestToDOM() {
 
   initAmbientDust();
 }
-
-/* ============================================================
-   LEVEL 5: MORSE CODE 50% MATCH & 3 ATTEMPTS VERIFIER
-   ============================================================ */
-function initMorseVerification(secretWord) {
-  decodeAttempts = 3;
-  document.getElementById('attempts-left-count').innerText = decodeAttempts;
-  const input = document.getElementById('user-decoded-guess');
-  const btn = document.getElementById('btn-check-decode');
-  const errBox = document.getElementById('decode-error-msg');
-  const card = document.getElementById('decoded-card');
-  const note = document.getElementById('decode-result-note');
-
-  btn.onclick = () => {
-    const guess = input.value.trim().toUpperCase();
-    if (!guess) {
-      errBox.innerText = "Please type your decoded guess!";
-      errBox.classList.remove('hidden');
-      return;
-    }
-
-    const matchRatio = calculateSimilarity(guess, secretWord);
-
-    if (matchRatio >= 0.5 || guess === secretWord) {
-      revealSecretMessage(true, "Incredible! You cracked the cipher! 🎉");
-    } else {
-      decodeAttempts--;
-      document.getElementById('attempts-left-count').innerText = decodeAttempts;
-
-      if (decodeAttempts > 0) {
-        errBox.innerText = `Incorrect decode! ${decodeAttempts} attempt(s) remaining.`;
-        errBox.classList.remove('hidden');
-      } else {
-        revealSecretMessage(false, "Attempts exhausted! Here is the decrypted message: 🔓");
-      }
-    }
-  };
-
-  function revealSecretMessage(isSuccess, noteText) {
-    errBox.classList.add('hidden');
-    input.disabled = true;
-    btn.disabled = true;
-    note.innerText = noteText;
-    card.classList.remove('hidden');
-    if (isSuccess) confetti({ particleCount: 90, spread: 60 });
-  }
-}
-
-function calculateSimilarity(str1, str2) {
-  if (str1 === str2) return 1.0;
-  if (str1.length < 2 || str2.length < 2) return str1 === str2 ? 1 : 0;
-
-  const getBigrams = s => {
-    const bigrams = new Set();
-    for (let i = 0; i < s.length - 1; i++) bigrams.add(s.substring(i, i + 2));
-    return bigrams;
-  };
-
-  const b1 = getBigrams(str1);
-  const b2 = getBigrams(str2);
-  let intersection = 0;
-  b1.forEach(bg => { if (b2.has(bg)) intersection++; });
-
-  return (2.0 * intersection) / (b1.size + b2.size);
-}
-
-/* ============================================================
-   FEEDBACK: SUPABASE + EMAILJS DIRECT DISPATCH
-   ============================================================ */
-document.getElementById('btn-send-feedback').addEventListener('click', async () => {
-  const fText = document.getElementById('feedback-text').value;
-  const btn = document.getElementById('btn-send-feedback');
-  if (!fText.trim()) return;
-
-  btn.disabled = true;
-  btn.innerText = 'Dispatching Reply... ⏳';
-
-  // 1. Save to Supabase table
-  const { error } = await supabaseClient.from('quest_feedbacks').insert([{
-    quest_id: questData.id,
-    feedback_text: fText
-  }]);
-
-  // 2. EmailJS Notification to Creator
-  if (window.emailjs && EMAILJS_PUBLIC_KEY !== "YOUR_EMAILJS_PUBLIC_KEY") {
-    try {
-      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-        to_email: questData.sender_email,
-        sender_name: questData.sender_name,
-        star_name: questData.star_name,
-        feedback_text: fText
-      });
-    } catch (e) {
-      console.warn("EmailJS notification error:", e);
-    }
-  }
-
-  if (!error) {
-    document.getElementById('feedback-status').classList.remove('hidden');
-    btn.innerText = 'Dispatched With Love! ❤️';
-  } else {
-    btn.disabled = false;
-    btn.innerText = 'Retry Sending 🚀';
-    alert('Could not save feedback: ' + error.message);
-  }
-});
 
 /* ============================================================
    LEVEL 2: MAZE GAME
@@ -646,7 +609,7 @@ function moveMazePlayer(dx, dy) {
 });
 
 /* ============================================================
-   LEVEL 3: PHOTO PUZZLE
+   LEVEL 3: PHOTO PUZZLE & CENTERED TIME-UP MODAL
    ============================================================ */
 let puzzleState = [1, 2, 0, 3, 4, 5, 6, 8, 7];
 let timerCountdown = 45;
@@ -709,6 +672,7 @@ function onTileClick(index) {
   }
 }
 
+// "Let me fix it for you" magic solve button
 document.getElementById('auto-solve-btn').addEventListener('click', () => {
   puzzleState = [0, 1, 2, 3, 4, 5, 6, 7, 8];
   puzzleSolved = true;
@@ -725,7 +689,7 @@ document.getElementById('retry-timer-btn').addEventListener('click', () => {
 });
 
 /* ============================================================
-   LEVEL 4: RUNAWAY NO BUTTON
+   LEVEL 4: CONTROLLED RUNAWAY NO & VISIBLE SELECTION
    ============================================================ */
 const noBtn = document.getElementById('no-btn');
 const yesBtn = document.getElementById('yes-btn');
@@ -751,7 +715,69 @@ yesBtn.addEventListener('click', () => {
 });
 
 /* ============================================================
-   LEVEL 6: CANDLE
+   LEVEL 5: MORSE CODE 50% MATCH VERIFIER
+   ============================================================ */
+function initMorseVerification(secretWord) {
+  decodeAttempts = 3;
+  document.getElementById('attempts-left-count').innerText = decodeAttempts;
+  const input = document.getElementById('user-decoded-guess');
+  const btn = document.getElementById('btn-check-decode');
+  const errBox = document.getElementById('decode-error-msg');
+  const card = document.getElementById('decoded-card');
+  const note = document.getElementById('decode-result-note');
+
+  btn.onclick = () => {
+    const guess = input.value.trim().toUpperCase();
+    if (!guess) {
+      errBox.innerText = "Please type your decoded guess!";
+      errBox.classList.remove('hidden');
+      return;
+    }
+
+    const matchRatio = calculateSimilarity(guess, secretWord);
+
+    if (matchRatio >= 0.5 || guess === secretWord) {
+      revealSecretMessage(true, "Incredible! You cracked the secret cipher! 🎉");
+    } else {
+      decodeAttempts--;
+      document.getElementById('attempts-left-count').innerText = decodeAttempts;
+
+      if (decodeAttempts > 0) {
+        errBox.innerText = `Incorrect decode! ${decodeAttempts} attempt(s) remaining.`;
+        errBox.classList.remove('hidden');
+      } else {
+        revealSecretMessage(false, "Attempts exhausted! Here is the decrypted message: 🔓");
+      }
+    }
+  };
+
+  function revealSecretMessage(isSuccess, noteText) {
+    errBox.classList.add('hidden');
+    input.disabled = true;
+    btn.disabled = true;
+    note.innerText = noteText;
+    card.classList.remove('hidden');
+    if (isSuccess) confetti({ particleCount: 90, spread: 60 });
+  }
+}
+
+function calculateSimilarity(str1, str2) {
+  if (str1 === str2) return 1.0;
+  if (str1.length < 2 || str2.length < 2) return str1 === str2 ? 1 : 0;
+  const getBigrams = s => {
+    const bigrams = new Set();
+    for (let i = 0; i < s.length - 1; i++) bigrams.add(s.substring(i, i + 2));
+    return bigrams;
+  };
+  const b1 = getBigrams(str1);
+  const b2 = getBigrams(str2);
+  let intersection = 0;
+  b1.forEach(bg => { if (b2.has(bg)) intersection++; });
+  return (2.0 * intersection) / (b1.size + b2.size);
+}
+
+/* ============================================================
+   LEVEL 6: CANDLE & FEEDBACK SAVER (SUPABASE ONLY)
    ============================================================ */
 const candle = document.getElementById('candle');
 candle.addEventListener('click', () => {
@@ -761,6 +787,30 @@ candle.addEventListener('click', () => {
     document.getElementById('candle-hint').style.display = 'none';
     document.getElementById('wish-revealed').classList.remove('hidden');
     confetti({ particleCount: 200, spread: 100 });
+  }
+});
+
+// Feedback is directly saved to Supabase (viewable in the Private link)
+document.getElementById('btn-send-feedback').addEventListener('click', async () => {
+  const fText = document.getElementById('feedback-text').value;
+  const btn = document.getElementById('btn-send-feedback');
+  if (!fText.trim()) return;
+
+  btn.disabled = true;
+  btn.innerText = 'Sending Reply... ⏳';
+
+  const { error } = await supabaseClient.from('quest_feedbacks').insert([{
+    quest_id: questData.id,
+    feedback_text: fText
+  }]);
+
+  if (!error) {
+    document.getElementById('feedback-status').classList.remove('hidden');
+    btn.innerText = 'Sent Successfully! ❤️';
+  } else {
+    btn.disabled = false;
+    btn.innerText = 'Retry 🚀';
+    alert('Could not save feedback: ' + error.message);
   }
 });
 
