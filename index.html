@@ -11,12 +11,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Caveat:wght@600&display=swap" rel="stylesheet" />
 
-  <!-- Confetti, Cropper, Supabase & EmailJS SDK -->
+  <!-- Confetti, Cropper & Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -37,7 +36,7 @@
       </div>
 
       <form id="quest-form">
-        <!-- 0. Basic Details -->
+        <!-- 0. Core Details -->
         <div class="section-divider">0. Core Details</div>
         <div class="input-row">
           <div class="field">
@@ -51,38 +50,31 @@
         </div>
 
         <div class="field">
-          <label>Your Email Address (To receive their feedback) 📧</label>
-          <input type="email" id="in-sender-email" required placeholder="you@example.com" class="creamy-input" />
-          <small class="dim-hint">Their final reply will be emailed directly to this address.</small>
-        </div>
-
-        <div class="field">
-          <label>Birthday Star's Portrait (Hero Avatar) 📸</label>
+          <label>Birthday Star's Portrait (Hero Photo) 📸</label>
           <input type="file" id="in-hero-file" accept="image/*" class="creamy-input" />
           <div class="crop-preview-wrap"><img id="crop-preview-hero" class="img-preview hidden"/></div>
         </div>
 
-        <!-- Mutual Exclusion Audio Selection -->
         <div class="field">
           <label>Background Soundtrack (Select Preset OR Upload) 🎵</label>
           <select id="bgm-preset-selector" class="creamy-select">
             <option value="">-- Choose from preset tracks --</option>
-            <option value="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3">1. Sweet Acoustic Melody (Warm & Acoustic)</option>
-            <option value="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3">2. Cinematic Happy Piano (Emotional & Inspiring)</option>
-            <option value="https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3">3. Warm Ambient Celebration (Lo-Fi Vibes)</option>
-            <option value="https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3">4. Upbeat Joyful Instrumental (Party Tune)</option>
+            <option value="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3">1. Sweet Acoustic Melody</option>
+            <option value="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3">2. Cinematic Happy Piano</option>
+            <option value="https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3">3. Warm Ambient Celebration</option>
+            <option value="https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3">4. Upbeat Joyful Instrumental</option>
           </select>
           <div class="divider-text">OR</div>
           <input type="file" id="in-bgm-file" accept="audio/*" class="creamy-input" />
-          <small id="bgm-hint" class="dim-hint">Select a preset or upload your own MP3. One choice disables the other automatically.</small>
+          <small class="dim-hint">Select a preset or upload your own MP3. One disables the other automatically.</small>
         </div>
 
         <div class="field">
           <label>Intro Message</label>
           <select id="intro-presets" class="creamy-select">
             <option value="custom">-- Custom Message --</option>
-            <option value="en_1">Warm & Sweet: May your day be filled with endless smiles and pure joy!</option>
-            <option value="en_2">Funny Roast: It takes a saint to handle someone as crazy as you. Happy Birthday!</option>
+            <option value="en_1">Warm: May your birthday be filled with endless smiles and pure joy!</option>
+            <option value="en_2">Funny: It takes an absolute saint to handle someone as crazy as you. Happy Birthday!</option>
             <option value="en_3">Adventurous: Welcome to your secret birthday quest. Ready for the surprises?</option>
             <option value="en_4">Heartfelt: So grateful to have someone as irreplaceable as you in my journey.</option>
           </select>
@@ -103,7 +95,6 @@
             <option value="en_1">Every picture tells a story of unforgettable laughs and golden moments!</option>
             <option value="en_2">Timeless frames of our journey together. Here is to making many more!</option>
             <option value="en_3">Looking back at these moments makes me realize how blessed I am to have you.</option>
-            <option value="en_4">Age is just a number, but your silliness is definitely timeless!</option>
           </select>
           <textarea id="in-level1-note" rows="3" class="creamy-textarea mt-1" placeholder="Type caption here..."></textarea>
         </div>
@@ -116,20 +107,18 @@
             <option value="custom">-- Custom Prompt --</option>
             <option value="en_1">Use your token to navigate through the labyrinth and grab that birthday cake!</option>
             <option value="en_2">Don't think you can devour that whole cake alone just because it's your birthday!</option>
-            <option value="en_3">Only true champions can reach the slice without hitting the walls. Let's see you try!</option>
-            <option value="en_4">A sweet quest awaits. Find the shortest path to your celebration slice!</option>
           </select>
           <textarea id="in-level2-intro" rows="2" class="creamy-textarea mt-1" placeholder="Type message..."></textarea>
         </div>
         <div class="field">
           <label>Cake Found Success Text</label>
-          <input type="text" id="in-level2-success" class="creamy-input" value="Awesome! You captured the cake! Now don't forget my slice! 🍰🎉" />
+          <input type="text" id="in-level2-success" class="creamy-input" value="Awesome! You reached the cake! Now don't forget my slice! 🍰🎉" />
         </div>
 
         <!-- 3. Puzzle -->
         <div class="section-divider">3. Photo Puzzle</div>
         <div class="field">
-          <label>Puzzle Photo (1:1 Ratio Crop Available) 🧩</label>
+          <label>Puzzle Photo (1:1 Ratio Crop) 🧩</label>
           <input type="file" id="in-level3-file" accept="image/*" class="creamy-input" />
           <div class="crop-preview-wrap"><img id="crop-preview-puzzle" class="img-preview hidden"/></div>
         </div>
@@ -148,9 +137,9 @@
         <!-- 5. Morse Code -->
         <div class="section-divider">5. Secret Morse Code Message</div>
         <div class="field">
-          <label>Secret Word / Phrase (Auto-converts to Morse code) 📻</label>
+          <label>Secret Word / Phrase (English) 📻</label>
           <input type="text" id="in-level5-word" class="creamy-input" placeholder="BEST FRIEND" value="BEST FRIEND" />
-          <small class="dim-hint">The birthday star has 3 attempts to decrypt and type this word.</small>
+          <small class="dim-hint">Birthday star will get 3 attempts to decrypt and enter this word.</small>
         </div>
 
         <!-- 6. Finale -->
@@ -161,8 +150,6 @@
             <option value="custom">-- Custom Letter --</option>
             <option value="en_1">In a world full of temporary faces, your friendship is the most genuine blessing. Thank you for always being by my side through every up and down. May this year shower you with boundless success and unmatched happiness!</option>
             <option value="en_2">Another chapter unfolds today! Keep shining bright, chasing big dreams, and never losing your signature laugh. You are irreplaceable!</option>
-            <option value="en_3">Happy Birthday to the one who makes ordinary moments feel like cinematic memories. Excited for all the adventures waiting for us ahead!</option>
-            <option value="en_4">Thank you for filling my days with warmth and unconditional support. You deserve nothing less than the absolute best that life has to offer!</option>
           </select>
           <textarea id="in-level6-letter" rows="4" class="creamy-textarea mt-1" placeholder="Type final letter..."></textarea>
         </div>
@@ -173,26 +160,45 @@
         </div>
 
         <button type="submit" id="btn-create-quest" class="btn-create">
-          <span>Generate Quest Link 🚀</span>
+          <span>Generate Quest Links 🚀</span>
         </button>
       </form>
     </div>
   </div>
 
-  <!-- Share Modal -->
+  <!-- Dual Link Share Modal -->
   <div id="share-modal" class="crop-modal hidden">
-    <div class="crop-modal-content text-center">
-      <h3>🎉 Quest is Live!</h3>
-      <p class="dim-hint mt-1">Share this private link with the birthday star:</p>
-      <input type="text" id="generated-link-input" readonly class="creamy-input mt-1" />
-      <div class="crop-actions">
-        <button type="button" id="btn-copy-link" class="btn-create">📋 Copy Link</button>
-        <button type="button" id="btn-open-quest" class="btn-secondary">Open Quest Now 🚀</button>
+    <div class="crop-modal-content text-left">
+      <h3 class="text-center">🎉 Quest Generated Successfully!</h3>
+      <p class="dim-hint text-center mt-1">Here are your two exclusive links. Copy and keep them safe!</p>
+      
+      <!-- Link 1: Birthday Star Link -->
+      <div class="link-box mt-2">
+        <label class="link-title">1. Link for Birthday Star 🎂</label>
+        <p class="link-desc">Send this link to your friend to let them play the quest:</p>
+        <div class="link-input-group">
+          <input type="text" id="star-link-input" readonly class="creamy-input small-text" />
+          <button type="button" id="btn-copy-star" class="btn-copy">📋 Copy</button>
+        </div>
+      </div>
+
+      <!-- Link 2: Creator Private Feedback Dashboard -->
+      <div class="link-box mt-2 private-box">
+        <label class="link-title">2. Your Private Feedback Link 🔒</label>
+        <p class="link-desc"><strong>DO NOT share this with anyone!</strong> Open this link anytime to see if your friend submitted a feedback reply:</p>
+        <div class="link-input-group">
+          <input type="text" id="creator-link-input" readonly class="creamy-input small-text" />
+          <button type="button" id="btn-copy-creator" class="btn-copy">📋 Copy</button>
+        </div>
+      </div>
+
+      <div class="crop-actions mt-3">
+        <button type="button" id="btn-open-star-quest" class="btn-create">Play As Birthday Star 🚀</button>
       </div>
     </div>
   </div>
 
-  <!-- Crop Modal -->
+  <!-- Image Cropper Modal -->
   <div id="crop-modal" class="crop-modal hidden">
     <div class="crop-modal-content">
       <div class="crop-img-box"><img id="cropping-image" src="" /></div>
@@ -204,7 +210,26 @@
   </div>
 
   <!-- ==========================================
-       2. PLAY MODE: WARM & LUXURY LIGHT THEME
+       2. CREATOR PRIVATE FEEDBACK VIEW
+       ========================================== -->
+  <div id="admin-feedback-view" class="setup-container hidden">
+    <div class="creamy-card">
+      <div class="form-header text-center">
+        <span class="badge">🔒 Private Dashboard</span>
+        <h2>Birthday Quest Responses</h2>
+        <p id="admin-welcome-text">Checking responses for your created quest...</p>
+      </div>
+      
+      <div id="feedback-records-container" class="mt-2">
+        <div class="loading-spinner text-center">Loading feedback... ⏳</div>
+      </div>
+
+      <button type="button" class="btn btn-secondary mt-3" onclick="window.location.reload()">Refresh Feedback 🔄</button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       3. PLAY MODE: WARM LIGHT QUEST SPA
        ========================================== -->
   <div id="quest-view" class="quest-wrapper hidden">
     <div class="light-orb orb-1"></div>
@@ -296,14 +321,15 @@
           <div class="timer-badge"><span id="puzzle-timer">⏳ Time: 45s</span></div>
           <div id="puzzle-board" class="puzzle-board"></div>
 
+          <!-- Centered Troll Modal -->
           <div id="troll-modal" class="modal-overlay hidden">
-            <div class="light-card modal-box">
-              <div class="troll-icon">😜</div>
+            <div class="light-card modal-center-box">
+              <div class="troll-icon">⏰</div>
               <h3 class="modal-title">Time's Up!</h3>
-              <p class="modal-desc">Need a helping hand to solve it?</p>
+              <p class="modal-desc">Need a little helping hand to put the pieces together?</p>
               <div class="modal-btn-group">
-                <button class="btn btn-secondary" id="retry-timer-btn">Try Again (+1 Min)</button>
-                <button class="btn btn-magic" id="auto-solve-btn">Auto-Solve Magic 🪄</button>
+                <button class="btn btn-secondary" id="retry-timer-btn">Try Again (+1 Min) ⏱️</button>
+                <button class="btn btn-magic" id="auto-solve-btn">Let me fix it for you! 🪄</button>
               </div>
             </div>
           </div>
@@ -323,9 +349,11 @@
             <button id="no-btn" class="btn btn-no small-no-btn">NO 😜</button>
           </div>
 
+          <!-- Highlighted YES selection card -->
           <div id="trap-success" class="trap-feedback hidden">
+            <div class="choice-tag">✨ Your Confirmed Answer: <strong>YES! Definitely! 😍</strong></div>
             <h3>I knew it! Truth always wins! 😍</h3>
-            <p>Unlocked the secret chamber for you!</p>
+            <p>You admitted it! Unlocked the secret chamber for you!</p>
             <button class="btn btn-primary mt-2" onclick="goToLevel(5)">Secret Chamber ➡️</button>
           </div>
         </div>
@@ -386,13 +414,13 @@
           <h3 class="gallery-heading">Memory Wall 🎞️</h3>
           <div id="display-polaroid-grid" class="grand-polaroid-wall"></div>
 
-          <!-- Feedback Card -->
+          <!-- Feedback Box -->
           <div class="feedback-card">
             <h4>Leave a Reply for <span id="feedback-receiver-name"></span> 💌</h4>
-            <p class="dim-hint">Your message will be sent directly to their email address!</p>
+            <p class="dim-hint">Your message will be sent privately to them!</p>
             <textarea id="feedback-text" rows="3" class="creamy-textarea" placeholder="Type your heartfelt reply here..."></textarea>
             <button id="btn-send-feedback" class="btn btn-magic mt-1">Send Reply 🚀</button>
-            <p id="feedback-status" class="feedback-success hidden">Reply dispatched successfully to creator! ❤️</p>
+            <p id="feedback-status" class="feedback-success hidden">Reply submitted successfully! ❤️</p>
           </div>
 
           <button class="btn btn-secondary replay-btn mt-3" onclick="celebrateAgain()">
