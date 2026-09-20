@@ -55,19 +55,23 @@
           <div class="crop-preview-wrap"><img id="crop-preview-hero" class="img-preview hidden"/></div>
         </div>
 
-        <div class="field">
-          <label>Background Soundtrack (Select Preset OR Upload) 🎵</label>
-          <select id="bgm-preset-selector" class="creamy-select">
-            <option value="">-- Choose from preset tracks --</option>
-            <option value="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3">1. Sweet Acoustic Melody</option>
-            <option value="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3">2. Cinematic Happy Piano</option>
-            <option value="https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3">3. Warm Ambient Celebration</option>
-            <option value="https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3">4. Upbeat Joyful Instrumental</option>
-          </select>
-          <div class="divider-text">OR</div>
-          <input type="file" id="in-bgm-file" accept="audio/*" class="creamy-input" />
-          <small class="dim-hint">Select a preset or upload your own MP3. One disables the other automatically.</small>
-        </div>
+       <div class="field">
+  <label>Background Soundtrack (Select Preset OR Upload) 🎵</label>
+  <div class="audio-select-wrap">
+    <select id="bgm-preset-selector" class="creamy-select">
+      <option value="">-- Choose from preset tracks --</option>
+      <option value="https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3">1. Serene View (Acoustic Guitar)</option>
+      <option value="https://assets.mixkit.co/music/preview/mixkit-feeling-happy-5.mp3">2. Feeling Happy (Upbeat Piano)</option>
+      <option value="https://assets.mixkit.co/music/preview/mixkit-sweet-love-441.mp3">3. Sweet Love (Emotional Ambient)</option>
+      <option value="https://assets.mixkit.co/music/preview/mixkit-a-very-happy-christmas-897.mp3">4. Joyful Celebration (Festive Tune)</option>
+    </select>
+    <button type="button" id="btn-preview-audio" class="btn-audio-preview">▶️ Test</button>
+  </div>
+  <audio id="preview-player" preload="none"></audio>
+  <div class="divider-text">OR</div>
+  <input type="file" id="in-bgm-file" accept="audio/*" class="creamy-input" />
+  <small class="dim-hint">Test presets using the button before choosing. Uploading a file will automatically disable presets.</small>
+</div>
 
         <div class="field">
           <label>Intro Message</label>
