@@ -9,13 +9,14 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Manjari:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Manjari:wght@400;700&family=Caveat:wght@600&display=swap" rel="stylesheet" />
 
-  <!-- Confetti, Cropper.js & Supabase SDK -->
+  <!-- Confetti, Cropper, Supabase & EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -29,127 +30,141 @@
       <div class="form-header">
         <div class="header-top-row">
           <span class="badge">🎁 Quest Creator Studio</span>
-          <button type="button" id="btn-fill-sample" class="btn-sample">⚡ Fill Sample Data</button>
+          <button type="button" id="btn-fill-sample" class="btn-sample">⚡ സാമ്പിൾ ഡാറ്റ ചേർക്കുക</button>
         </div>
-        <h2>Create Birthday Quest</h2>
-        <p>Customise each level for your special person.</p>
+        <h2>ബർത്ത്‌ഡേ ക്വസ്റ്റ് ഒരുക്കാം</h2>
+        <p>നിങ്ങളുടെ പ്രിയപ്പെട്ടവർക്കായി ഓരോ ലെവലും വ്യക്തിഗതമായി മാറ്റിയെടുക്കൂ.</p>
       </div>
 
       <form id="quest-form">
         <!-- 0. Basic Details -->
-        <div class="section-divider">0. Basic Details</div>
+        <div class="section-divider">0. അടിസ്ഥാന വിവരങ്ങൾ</div>
         <div class="input-row">
           <div class="field">
-            <label>Birthday Star's Name</label>
-            <input type="text" id="in-star-name" required placeholder="Name" class="creamy-input" />
+            <label>ആരുടെ പിറന്നാളാണ്? (Birthday Star's Name)</label>
+            <input type="text" id="in-star-name" required placeholder="പേര്" class="creamy-input" />
           </div>
           <div class="field">
-            <label>Your Name</label>
-            <input type="text" id="in-sender-name" required placeholder="Your Name" class="creamy-input" />
+            <label>ആരാണ് അയക്കുന്നത്? (Your Name)</label>
+            <input type="text" id="in-sender-name" required placeholder="നിങ്ങളുടെ പേര്" class="creamy-input" />
           </div>
         </div>
 
         <div class="field">
-          <label>Your Email (To receive feedback) 📧</label>
+          <label>നിങ്ങളുടെ ഇമെയിൽ (മറുപടി ഇമെയിലിൽ ലഭിക്കാൻ) 📧</label>
           <input type="email" id="in-sender-email" required placeholder="you@gmail.com" class="creamy-input" />
+          <small class="dim-hint">പിറന്നാളുകാരൻ തിരികെ നൽകുന്ന ഫീഡ്‌ബാക്ക് ഈ ഇമെയിലിലേക്ക് നേരിട്ട് എത്തും.</small>
         </div>
 
         <div class="field">
-          <label>Birthday Star's Photo (Hero Avatar & Token) 📸</label>
+          <label>Birthday Star-ന്റെ പ്രധാന ഫോട്ടോ 📸</label>
           <input type="file" id="in-hero-file" accept="image/*" class="creamy-input" />
           <div class="crop-preview-wrap"><img id="crop-preview-hero" class="img-preview hidden"/></div>
         </div>
 
-        <!-- Audio Options -->
+        <!-- Single Select Music Logic (Either Preset OR Upload) -->
         <div class="field">
-          <label>Background Music (Select Preset or Upload) 🎵</label>
+          <label>Background Music (ഒന്നുകിൽ ലിസ്റ്റിൽ നിന്ന് എടുക്കുക, അല്ലെങ്കിൽ സ്വന്തമായി അപ്‌ലോഡ് ചെയ്യുക) 🎵</label>
           <select id="bgm-preset-selector" class="creamy-select">
-            <option value="">-- Choose a Preset Song --</option>
-            <option value="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3">Option 1: Sweet Acoustic Melody</option>
-            <option value="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3">Option 2: Cinematic Happy Piano</option>
-            <option value="https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3">Option 3: Warm Ambient Celebration</option>
-            <option value="https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3">Option 4: Lo-Fi Chill Beats</option>
+            <option value="">-- ലിസ്റ്റിൽ നിന്ന് പാട്ട് തിരഞ്ഞെടുക്കാം --</option>
+            <option value="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3">1. Sweet Acoustic Melody (Acoustic Guitar)</option>
+            <option value="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3">2. Cinematic Happy Piano (Emotional)</option>
+            <option value="https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3">3. Warm Ambient Celebration (Lofi/Chill)</option>
+            <option value="https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3">4. Happy Birthday Upbeat Instrumental</option>
           </select>
-          <div class="mt-1">
-            <label class="dim-hint">Or Upload Your Own MP3 Song:</label>
-            <input type="file" id="in-bgm-file" accept="audio/*" class="creamy-input" />
-          </div>
+          
+          <div class="divider-text">അല്ലെങ്കിൽ (OR)</div>
+          
+          <input type="file" id="in-bgm-file" accept="audio/*" class="creamy-input" />
+          <small id="bgm-hint" class="dim-hint">രണ്ടും ഒരുമിച്ച് സാധ്യമല്ല; ഒരെണ്ണം സെലക്ട് ചെയ്യുമ്പോൾ മറ്റേത് തനിയെ ബ്ലോക്കാകും.</small>
         </div>
 
         <div class="field">
-          <label>Intro Message</label>
+          <label>ഇൻട്രോ സന്ദേശം (Intro Message)</label>
           <select id="intro-presets" class="creamy-select">
-            <option value="custom">-- Custom Text --</option>
-            <option value="p1">Option 1: Funny roast & love</option>
-            <option value="p2">Option 2: Nostalgic & heartfelt wish</option>
-            <option value="p3">Option 3: Let the quest begin!</option>
+            <option value="custom">-- സ്വന്തമായി ടൈപ്പ് ചെയ്യുക (Custom) --</option>
+            <option value="ml_1">മലയാളം: നിന്നെപ്പോലൊരു വട്ടിനെ സഹിക്കാൻ വലിയൊരു മനസ്സ് തന്നെ വേണം! 😂</option>
+            <option value="ml_2">മലയാളം: ഓർമ്മകൾ തിളങ്ങി നിൽക്കുന്ന ഈ ദിനത്തിൽ ഒരായിരം ആശംസകൾ! ❤️</option>
+            <option value="en_1">English: Wishing you the happiest birthday filled with love and laughter! ✨</option>
+            <option value="en_2">English: Another year older, but definitely not wiser! Have a blast! 🚀</option>
           </select>
-          <textarea id="in-intro-content" rows="3" class="creamy-textarea mt-1" placeholder="Type intro message here..."></textarea>
+          <textarea id="in-intro-content" rows="3" class="creamy-textarea mt-1" placeholder="ഇൻട്രോ സന്ദേശം ടൈപ്പ് ചെയ്യുക..."></textarea>
         </div>
 
         <!-- 1. Level 1 Slideshow -->
-        <div class="section-divider">1. Memory Slideshow</div>
+        <div class="section-divider">1. ഓർമ്മച്ചെപ്പ് (Slideshow)</div>
         <div class="field">
-          <label>Select Slideshow Images 🖼️</label>
+          <label>ഫോട്ടോകൾ തിരഞ്ഞെടുക്കുക 🖼️</label>
           <input type="file" id="in-level1-files" multiple accept="image/*" class="creamy-input" />
           <div id="slideshow-preview-grid" class="preview-grid"></div>
         </div>
         <div class="field">
-          <label>Slideshow Caption / Note</label>
-          <textarea id="in-level1-note" rows="3" class="creamy-textarea" placeholder="Note under memories..."></textarea>
+          <label>സ്ലൈഡ്‌ഷോ താഴെ കാണിക്കേണ്ട കുറിപ്പ്</label>
+          <select id="level1-presets" class="creamy-select">
+            <option value="custom">-- സ്വന്തമായി ടൈപ്പ് ചെയ്യുക (Custom) --</option>
+            <option value="ml_1">മലയാളം: ഓരോ ചിത്രത്തിനും പറയാൻ ഒരു കഥയുണ്ട്... നമ്മുടെ നല്ല ഓർമ്മകൾ! 📸</option>
+            <option value="en_1">English: Captured moments, timeless memories. So glad to have you! ✨</option>
+          </select>
+          <textarea id="in-level1-note" rows="3" class="creamy-textarea mt-1" placeholder="കുറിപ്പ് ടൈപ്പ് ചെയ്യാം..."></textarea>
         </div>
 
         <!-- 2. Level 2 Cake Maze -->
-        <div class="section-divider">2. Cake Maze Game</div>
+        <div class="section-divider">2. കേക്ക് മെയ്സ് ലെവൽ (Maze Level)</div>
         <div class="field">
-          <label>Maze Instruction</label>
-          <textarea id="in-level2-intro" rows="2" class="creamy-textarea" placeholder="Guide your token to the cake!"></textarea>
+          <label>ഈ ലെവലിൽ നൽകേണ്ട സന്ദേശം (Message Content)</label>
+          <select id="level2-presets" class="creamy-select">
+            <option value="custom">-- സ്വന്തമായി ടൈപ്പ് ചെയ്യുക (Custom) --</option>
+            <option value="ml_1">മലയാളം: പിറന്നാളാണെന്ന് പറഞ്ഞ് ആ കേക്ക് ഫുൾ ഒറ്റയ്ക്ക് അടിച്ചുമാറ്റാമെന്ന് വിചാരിക്കണ്ട! 🎂😎</option>
+            <option value="en_1">English: Don't you dare eat that birthday cake all by yourself! Save me a slice! 🍰</option>
+          </select>
+          <textarea id="in-level2-intro" rows="2" class="creamy-textarea mt-1" placeholder="സന്ദേശം ടൈപ്പ് ചെയ്യുക..."></textarea>
         </div>
         <div class="field">
-          <label>Win Celebration Message</label>
-          <textarea id="in-level2-success" rows="2" class="creamy-textarea" placeholder="You reached the cake!"></textarea>
+          <label>കേക്ക് കണ്ടെത്തുമ്പോൾ കാണിക്കേണ്ട വിജയാശംസ (Success Text)</label>
+          <input type="text" id="in-level2-success" class="creamy-input" value="Awesome! കേക്ക് കണ്ടെത്തി! ഇനി ട്രീറ്റ് തരാൻ മറക്കല്ലേ! 🍰🎉" />
         </div>
 
         <!-- 3. Level 3 Puzzle -->
-        <div class="section-divider">3. Photo Puzzle</div>
+        <div class="section-divider">3. ഫോട്ടോ പസിൽ (Photo Puzzle)</div>
         <div class="field">
-          <label>Puzzle Photo (1:1 Aspect Ratio) 🧩</label>
+          <label>പസിലിനുള്ള ഫോട്ടോ (1:1 Aspect Ratio) 🧩</label>
           <input type="file" id="in-level3-file" accept="image/*" class="creamy-input" />
           <div class="crop-preview-wrap"><img id="crop-preview-puzzle" class="img-preview hidden"/></div>
         </div>
         <div class="field">
-          <label>Puzzle Hint / Description</label>
-          <textarea id="in-level3-desc" rows="2" class="creamy-textarea" placeholder="Solve within 45 seconds!"></textarea>
+          <label>പസിൽ കുറിപ്പ് (Puzzle Description)</label>
+          <input type="text" id="in-level3-desc" class="creamy-input" value="45 സെക്കന്റിനുള്ളിൽ നിന്റെ സ്വന്തം ഫോട്ടോ ശരിയാക്കി എടുക്ക്! ⏱️" />
         </div>
 
         <!-- 4. Level 4 Trap -->
-        <div class="section-divider">4. Trap Litmus Test</div>
+        <div class="section-divider">4. സത്യം മാത്രം പറയണം (Trap Litmus Test)</div>
         <div class="field">
-          <label>Fun Trap Question</label>
-          <input type="text" id="in-level4-question" class="creamy-input" value="Am I the best friend you have in the entire world?" />
+          <label>ചോദ്യം (Question)</label>
+          <input type="text" id="in-level4-question" class="creamy-input" value="ഈ ലോകത്തിൽ നിനക്ക് ഏറ്റവും ഇഷ്ടമുള്ള ബെസ്റ്റ് ഫ്രണ്ട് ഞാനല്ലേ? 😜" />
         </div>
 
-        <!-- 5. Level 5 Morse Code (No Audio Requirement) -->
-        <div class="section-divider">5. Secret Morse Code Message</div>
+        <!-- 5. Level 5 Morse Code -->
+        <div class="section-divider">5. രഹസ്യ കോഡ് (Secret Morse Message)</div>
         <div class="field">
-          <label>Type Secret Message (Will auto-convert to Dot-Dash Morse symbols)</label>
-          <input type="text" id="in-level5-word" class="creamy-input" placeholder="HAPPY BIRTHDAY" value="HAPPY BIRTHDAY" />
+          <label>രഹസ്യ സന്ദേശം (ഇംഗ്ലീഷിൽ ടൈപ്പ് ചെയ്യുക - ഇത് മോഴ്സ് കോഡായി മാറും) 📻</label>
+          <input type="text" id="in-level5-word" class="creamy-input" placeholder="YOU ARE AWESOME" value="BEST FRIEND" />
+          <small class="dim-hint">പിറന്നാളുകാരന് 3 അറ്റെംപ്റ്റുകൾ ലഭിക്കും, ഡീകോഡ് ചെയ്ത് ടൈപ്പ് ചെയ്യാൻ.</small>
         </div>
 
         <!-- 6. Level 6 Finale -->
-        <div class="section-divider">6. Grand Finale</div>
+        <div class="section-divider">6. ഗ്രാൻഡ് ഫിനാലെ (Grand Finale)</div>
         <div class="field">
-          <label>Heartfelt Final Letter</label>
-          <textarea id="in-level6-letter" rows="4" class="creamy-textarea" placeholder="Your long birthday wish..."></textarea>
+          <label>ഹൃദയം നിറഞ്ഞ പിറന്നാൾ കത്ത് (Letter)</label>
+          <textarea id="in-level6-letter" rows="4" class="creamy-textarea" placeholder="പ്രിയപ്പെട്ട കൂട്ടുകാരന്/കൂട്ടുകാരിക്ക്..."></textarea>
         </div>
         <div class="field">
-          <label>Polaroid Photos (Select 4 to 8 images) 📷</label>
+          <label>ഗ്രാൻഡ് പോളറോയിഡ് ചിത്രങ്ങൾ (Select Photos) 📷</label>
           <input type="file" id="in-level6-files" multiple accept="image/*" class="creamy-input" />
           <div id="polaroid-preview-grid" class="preview-grid"></div>
         </div>
 
         <button type="submit" id="btn-create-quest" class="btn-create">
-          <span>Generate Quest Link 🚀</span>
+          <span>Quest ലിങ്ക് നിർമ്മിക്കുക 🚀</span>
         </button>
       </form>
     </div>
@@ -158,12 +173,12 @@
   <!-- Share Link Modal -->
   <div id="share-modal" class="crop-modal hidden">
     <div class="crop-modal-content text-center">
-      <h3>🎉 Quest is Ready!</h3>
-      <p class="dim-hint mt-1">Copy this link and send it to your friend:</p>
+      <h3>🎉 ലിങ്ക് തയ്യാറായി!</h3>
+      <p class="dim-hint mt-1">ഈ ലിങ്ക് കോപ്പി ചെയ്ത് പിറന്നാളുകാരന് അയച്ചു നൽകൂ:</p>
       <input type="text" id="generated-link-input" readonly class="creamy-input mt-1" />
       <div class="crop-actions">
-        <button type="button" id="btn-copy-link" class="btn-create">📋 Copy Link</button>
-        <button type="button" id="btn-open-quest" class="btn-secondary">Open Quest Now 🚀</button>
+        <button type="button" id="btn-copy-link" class="btn-create">📋 ലിങ്ക് കോപ്പി ചെയ്യുക</button>
+        <button type="button" id="btn-open-quest" class="btn-secondary">ഇപ്പോൾ തുറക്കുക 🚀</button>
       </div>
     </div>
   </div>
@@ -178,7 +193,6 @@
       </div>
     </div>
   </div>
-
 
   <!-- ==========================================
        QUEST PLAY MODE: INTERACTIVE SPA
@@ -223,7 +237,7 @@
       <section id="level-1" class="quest-stage">
         <div class="glass-card">
           <div class="stage-tag">Level 1 • Nostalgia</div>
-          <h2 class="stage-heading">Sweet Memories 📸</h2>
+          <h2 class="stage-heading">ചില സുന്ദര നിമിഷങ്ങൾ 📸</h2>
           <div class="carousel-container" id="carousel">
             <div class="carousel-track" id="carousel-track"></div>
             <button class="carousel-nav prev" id="car-prev">&#10094;</button>
@@ -241,7 +255,7 @@
       <section id="level-2" class="quest-stage">
         <div class="glass-card text-center">
           <div class="stage-tag">Level 2 • Mini-Maze</div>
-          <h2 class="stage-heading">Reach The Birthday Cake! 🎂</h2>
+          <h2 class="stage-heading">ക്ലിക്കി കേക്കിലേക്ക് എത്തൂ! 🎂</h2>
           <div class="maze-intro-box">
             <p id="display-level2-intro"></p>
           </div>
@@ -270,17 +284,17 @@
           <div class="stage-tag">Level 3 • Mystery Puzzle</div>
           <h2 class="stage-heading">3x3 Photo Puzzle 🧩</h2>
           <p id="display-level3-desc" class="subtext"></p>
-          <div class="timer-badge"><span id="puzzle-timer">⏳ Time: 45s</span></div>
+          <div class="timer-badge"><span id="puzzle-timer">⏳ സമയം: 45s</span></div>
           <div id="puzzle-board" class="puzzle-board"></div>
 
           <div id="troll-modal" class="modal-overlay hidden">
             <div class="glass-card modal-box">
               <div class="troll-icon">😜</div>
-              <h3 class="modal-title">Time Over!</h3>
-              <p class="modal-desc">Need some extra help?</p>
+              <h3 class="modal-title">സമയം തീർന്നു!</h3>
+              <p class="modal-desc">സഹായം വേണമെന്നുണ്ടോ?</p>
               <div class="modal-btn-group">
-                <button class="btn btn-secondary" id="retry-timer-btn">Try Again (+1 Min)</button>
-                <button class="btn btn-magic" id="auto-solve-btn">Auto-Solve Magic 🪄</button>
+                <button class="btn btn-secondary" id="retry-timer-btn">ഒന്നുകൂടി നോക്കാം (+1 Min)</button>
+                <button class="btn btn-magic" id="auto-solve-btn">ഞാൻ ശരിയാക്കി തരട്ടെ? 🪄</button>
               </div>
             </div>
           </div>
@@ -288,44 +302,51 @@
         </div>
       </section>
 
-      <!-- LEVEL 4: EXPANDED RUNAWAY ARENA -->
+      <!-- LEVEL 4 -->
       <section id="level-4" class="quest-stage">
         <div class="glass-card text-center trap-container">
           <div class="stage-tag">Level 4 • The Litmus Test</div>
-          <h2 class="stage-heading">Truth Time! 🤫</h2>
+          <h2 class="stage-heading">സത്യം മാത്രം പറയണം! 🤫</h2>
           <p id="display-level4-question" class="trap-prompt"></p>
 
           <div class="trap-arena runaway-field" id="trap-arena">
-            <button id="yes-btn" class="btn btn-yes">YES! Definitely! 😍</button>
+            <button id="yes-btn" class="btn btn-yes">YES! തീർച്ചയായും! 😍</button>
             <button id="no-btn" class="btn btn-no small-no-btn">NO 😜</button>
           </div>
 
           <div id="trap-success" class="trap-feedback hidden">
-            <h3>I knew it! Truth always triumphs! 😍</h3>
-            <p>Unlocked the secret chamber for you!</p>
+            <h3>I knew it! സത്യം എപ്പോഴും പുറത്തുവരും! 😍</h3>
+            <p>അടുത്ത ലെവൽ തുറന്നു തന്നിരിക്കുന്നു!</p>
             <button class="btn btn-primary mt-2" onclick="goToLevel(5)">Secret Chamber ➡️</button>
           </div>
         </div>
       </section>
 
-      <!-- LEVEL 5: VISUAL MORSE CODE ONLY -->
+      <!-- LEVEL 5: VERIFICATION DECODER WITH 3 ATTEMPTS -->
       <section id="level-5" class="quest-stage">
         <div class="glass-card text-center">
-          <div class="stage-tag">Level 5 • Secret Transmission</div>
-          <h2 class="stage-heading">Encrypted Morse Message 📻</h2>
-          <p class="subtext">Can you crack the code? Look at the transmission pattern below:</p>
+          <div class="stage-tag">Level 5 • Spy Transmission</div>
+          <h2 class="stage-heading">രഹസ്യ സന്ദേശം 📻</h2>
+          <p class="subtext">മോഴ്സ് സിഗ്നൽ പരിശോധിച്ച് രഹസ്യവാക്ക് എന്താണെന്ന് ടൈപ്പ് ചെയ്ത് കണ്ടുപിടിക്കൂ:</p>
           
           <div class="morse-visual-box">
             <span class="morse-label">SIGNAL PATTERN:</span>
             <div id="morse-dots-display" class="morse-pattern-code"></div>
           </div>
 
-          <div class="btn-group-center mt-2">
-            <button id="decode-btn" class="btn btn-magic">Decode Message 🔓</button>
+          <div class="decoder-input-box">
+            <input type="text" id="user-decoded-guess" class="creamy-input text-center" placeholder="ഡീകോഡ് ചെയ്ത വാക്ക് ഇവിടെ ടൈപ്പ് ചെയ്യുക..." />
+            <button id="btn-check-decode" class="btn btn-magic mt-1">പരിശോധിക്കുക (Check) 🔍</button>
+            <div class="attempts-indicator mt-1">
+              ബാക്കിയുള്ള ശ്രമങ്ങൾ (Attempts Left): <span id="attempts-left-count" class="badge-attempts">3</span>
+            </div>
+            <p id="decode-error-msg" class="decode-error hidden"></p>
           </div>
+
           <div id="decoded-card" class="decoded-card hidden">
             <div class="decoded-label">TRANSLATED MESSAGE:</div>
             <div id="display-secret-word" class="decoded-body"></div>
+            <p id="decode-result-note" class="dim-hint"></p>
             <button class="btn btn-primary mt-3" onclick="goToLevel(6)">Final Chamber ➡️</button>
           </div>
         </div>
@@ -343,26 +364,26 @@
               <div class="cake-bottom"></div>
             </div>
           </div>
-          <p id="candle-hint" class="candle-hint">Touch the candle to blow it out! 🕯️💨</p>
+          <p id="candle-hint" class="candle-hint">മെഴുകുതിരിയിൽ തൊട്ട് ഊതിക്കെടുത്തൂ! 🕯️💨</p>
           <div id="wish-revealed" class="wish-banner hidden">Happy Birthday To You! 🌟</div>
 
           <div class="letter-card">
             <div class="wax-seal">★</div>
-            <h3 class="letter-greeting">Dearest Friend,</h3>
+            <h3 class="letter-greeting">പ്രിയപ്പെട്ട കൂട്ടുകാരന്/കൂട്ടുകാരിക്ക്,</h3>
             <p id="display-level6-letter" class="letter-body"></p>
-            <div class="letter-sign">— With Love, <span id="display-sender-name"></span> ❤️</div>
+            <div class="letter-sign">— സ്നേഹത്തോടെ <span id="display-sender-name"></span> ❤️</div>
           </div>
 
-          <h3 class="gallery-heading">Memory Wall 🎞️</h3>
-          <div id="display-polaroid-grid" class="polaroid-grid"></div>
+          <h3 class="gallery-heading">ഓർമ്മച്ചെപ്പ് 🎞️</h3>
+          <div id="display-polaroid-grid" class="grand-polaroid-wall"></div>
 
           <!-- FEEDBACK SECTION -->
           <div class="feedback-card">
-            <h4>Leave a Reply for <span id="feedback-receiver-name"></span> 💌</h4>
-            <p class="dim-hint">Your reply will be saved directly for them!</p>
-            <textarea id="feedback-text" rows="3" class="creamy-textarea" placeholder="Type your sweet reply here..."></textarea>
-            <button id="btn-send-feedback" class="btn btn-magic mt-1">Send Reply 🚀</button>
-            <p id="feedback-status" class="feedback-success hidden">Reply sent successfully! ❤️</p>
+            <h4><span id="feedback-receiver-name"></span>-ന് മറുപടി നൽകാം 💌</h4>
+            <p class="dim-hint">നിങ്ങൾ എഴുതുന്ന മറുപടി അവർക്ക് ഇമെയിലായി നേരിട്ട് എത്തും!</p>
+            <textarea id="feedback-text" rows="3" class="creamy-textarea" placeholder="നിങ്ങളുടെ മറുപടി/സന്ദേശം ഇവിടെ ടൈപ്പ് ചെയ്യുക..."></textarea>
+            <button id="btn-send-feedback" class="btn btn-magic mt-1">അയക്കുക (Send Reply) 🚀</button>
+            <p id="feedback-status" class="feedback-success hidden">സന്ദേശം വിജയകരമായി അയച്ചു! ❤️</p>
           </div>
 
           <button class="btn btn-secondary replay-btn mt-3" onclick="celebrateAgain()">
