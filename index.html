@@ -35,6 +35,28 @@
         <p>Tailor every level for someone truly special.</p>
       </div>
 
+      <!-- About & Expandable Creator Guide -->
+      <div class="quest-info-card">
+        <p class="quest-summary">
+          <strong>✨ What is The Birthday Quest?</strong><br>
+          Transform a standard birthday wish into an interactive, gamified journey! The birthday star plays through custom maze challenges, memory puzzles, morse decoders, and candle-blowing to unveil your heartfelt final letter and memory wall.
+        </p>
+        <button type="button" id="btn-toggle-guide" class="btn-guide-toggle">📖 Read Creator Guide & Steps</button>
+        
+        <div id="creator-guide-content" class="guide-details hidden">
+          <ol class="guide-steps-list">
+            <li><strong>Core Details:</strong> Provide names and an avatar picture for the star runner token.</li>
+            <li><strong>Soundtrack:</strong> Pick an ambient preset track (with preview) or upload your favorite custom MP3.</li>
+            <li><strong>Level 1 Memories:</strong> Add personal candid photos for the rotating memory slideshow.</li>
+            <li><strong>Level 2 Cake Maze:</strong> Write a playful challenge note before they grab the virtual cake.</li>
+            <li><strong>Level 3 Photo Puzzle:</strong> Crop a portrait image into a 3x3 sliding photo puzzle.</li>
+            <li><strong>Level 4 & 5:</strong> Configure the truth trap question and secret English phrase for the Morse code.</li>
+            <li><strong>Level 6 Finale:</strong> Write your heart-touching note and curate the grand polaroid photo wall!</li>
+            <li><strong>Receive Feedback:</strong> Copy your private link to secretly view their replies anytime!</li>
+          </ol>
+        </div>
+      </div>
+
       <form id="quest-form">
         <!-- 0. Core Details -->
         <div class="section-divider">0. Core Details</div>
@@ -55,23 +77,24 @@
           <div class="crop-preview-wrap"><img id="crop-preview-hero" class="img-preview hidden"/></div>
         </div>
 
-       <div class="field">
-  <label>Background Soundtrack (Select Preset OR Upload) 🎵</label>
-  <div class="audio-select-wrap">
-    <select id="bgm-preset-selector" class="creamy-select">
-      <option value="">-- Choose from preset tracks --</option>
-      <option value="https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3">1. Serene View (Acoustic Guitar)</option>
-      <option value="https://assets.mixkit.co/music/preview/mixkit-feeling-happy-5.mp3">2. Feeling Happy (Upbeat Piano)</option>
-      <option value="https://assets.mixkit.co/music/preview/mixkit-sweet-love-441.mp3">3. Sweet Love (Emotional Ambient)</option>
-      <option value="https://assets.mixkit.co/music/preview/mixkit-a-very-happy-christmas-897.mp3">4. Joyful Celebration (Festive Tune)</option>
-    </select>
-    <button type="button" id="btn-preview-audio" class="btn-audio-preview">▶️ Test</button>
-  </div>
-  <audio id="preview-player" preload="none"></audio>
-  <div class="divider-text">OR</div>
-  <input type="file" id="in-bgm-file" accept="audio/*" class="creamy-input" />
-  <small class="dim-hint">Test presets using the button before choosing. Uploading a file will automatically disable presets.</small>
-</div>
+        <!-- Soundtrack with Working Presets and Play Test Button -->
+        <div class="field">
+          <label>Background Soundtrack (Select Preset OR Upload) 🎵</label>
+          <div class="audio-select-wrap">
+            <select id="bgm-preset-selector" class="creamy-select">
+              <option value="">-- Choose from preset tracks --</option>
+              <option value="https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3">1. Serene View (Acoustic Guitar)</option>
+              <option value="https://assets.mixkit.co/music/preview/mixkit-feeling-happy-5.mp3">2. Feeling Happy (Upbeat Piano)</option>
+              <option value="https://assets.mixkit.co/music/preview/mixkit-sweet-love-441.mp3">3. Sweet Love (Emotional Ambient)</option>
+              <option value="https://assets.mixkit.co/music/preview/mixkit-a-very-happy-christmas-897.mp3">4. Joyful Celebration (Festive Tune)</option>
+            </select>
+            <button type="button" id="btn-preview-audio" class="btn-audio-preview">▶️ Test</button>
+          </div>
+          <audio id="preview-player" preload="none"></audio>
+          <div class="divider-text">OR</div>
+          <input type="file" id="in-bgm-file" accept="audio/*" class="creamy-input" />
+          <small class="dim-hint">Test presets using the button before choosing. Uploading a file will automatically disable presets.</small>
+        </div>
 
         <div class="field">
           <label>Intro Message</label>
@@ -215,7 +238,7 @@
 
   <!-- ==========================================
        2. CREATOR PRIVATE FEEDBACK VIEW
-       ========================================== -->
+       ========================================= -->
   <div id="admin-feedback-view" class="setup-container hidden">
     <div class="creamy-card">
       <div class="form-header text-center">
@@ -353,9 +376,9 @@
             <button id="no-btn" class="btn btn-no small-no-btn">NO 😜</button>
           </div>
 
-          <!-- Highlighted YES selection card -->
+          <!-- Highlighted Selection Feedback -->
           <div id="trap-success" class="trap-feedback hidden">
-            <div class="choice-tag">✨ Your Confirmed Answer: <strong>YES! Definitely! 😍</strong></div>
+            <div class="choice-tag">✨ Your Confirmed Choice: <strong>YES! Definitely! 😍</strong></div>
             <h3>I knew it! Truth always wins! 😍</h3>
             <p>You admitted it! Unlocked the secret chamber for you!</p>
             <button class="btn btn-primary mt-2" onclick="goToLevel(5)">Secret Chamber ➡️</button>
@@ -418,11 +441,19 @@
           <h3 class="gallery-heading">Memory Wall 🎞️</h3>
           <div id="display-polaroid-grid" class="grand-polaroid-wall"></div>
 
-          <!-- Feedback Box -->
+          <!-- Enhanced Feedback Box with Presets & Auto-Clear -->
           <div class="feedback-card">
             <h4>Leave a Reply for <span id="feedback-receiver-name"></span> 💌</h4>
-            <p class="dim-hint">Your message will be sent privately to them!</p>
-            <textarea id="feedback-text" rows="3" class="creamy-textarea" placeholder="Type your heartfelt reply here..."></textarea>
+            <p class="dim-hint">Choose a quick preset or type your custom message:</p>
+            
+            <div class="feedback-chips-grid">
+              <button type="button" class="fb-chip">You are so sweet! Love you too ❤️</button>
+              <button type="button" class="fb-chip">This was the best surprise gift ever! 🎁✨</button>
+              <button type="button" class="fb-chip">I laughed so hard at the trap level! 😂❤️</button>
+              <button type="button" class="fb-chip">Thank you for making my day unforgettable! 🌟</button>
+            </div>
+
+            <textarea id="feedback-text" rows="3" class="creamy-textarea mt-1" placeholder="Type your heartfelt reply here..."></textarea>
             <button id="btn-send-feedback" class="btn btn-magic mt-1">Send Reply 🚀</button>
             <p id="feedback-status" class="feedback-success hidden">Reply submitted successfully! ❤️</p>
           </div>
