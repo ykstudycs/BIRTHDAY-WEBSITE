@@ -1,10 +1,10 @@
 /**
  * ============================================================
- * THE BIRTHDAY QUEST - FULL ENGINE & DYNAMIC CREATOR
+ * THE BIRTHDAY QUEST - FIXED DYNAMIC SCRIPT
  * ============================================================
  */
 
-// 1. SUPABASE CREDENTIALS (നിങ്ങളുടെ Supabase Keys ഇവിടെ നൽകുക)
+// 1. SUPABASE CREDENTIALS (আপনার URL এবং anon public key)
 const SUPABASE_URL = "https://uedytnpsodsgwtcjhjry.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_URIryt2eGjUWVjZlg5qXtQ_viYHrUHC";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -16,27 +16,40 @@ let questData = null;
 let cropperInstance = null;
 let activeCropCallback = null;
 
-// Temporary Arrays for Uploads
+// Audio element & toggle state
+const bgm = document.getElementById('bgm');
+const vinylBtn = document.getElementById('vinyl-btn');
+let isAudioPlaying = false;
+
+// Blobs & File Arrays
+let heroBlob = null;
+let puzzleBlob = null;
 let level1Files = [];
 let level6Files = [];
 
-// Audio Context for Morse Telegraph
-let audioCtx = null;
+// Morse Map
+const MORSE_MAP = {
+  'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+  'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+  'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+  'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+  'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---',
+  '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...',
+  '8': '---..', '9': '----.', ' ': '/'
+};
 
 /* ============================================================
-   ROUTING: BUILDER MODE vs QUEST PLAY MODE
+   ROUTING: CREATOR VIEW vs QUEST VIEW
    ============================================================ */
 window.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const questId = urlParams.get('id');
 
   if (questId) {
-    // Play Mode: Load Quest from Supabase
     document.getElementById('creator-view').classList.add('hidden');
     document.getElementById('quest-view').classList.remove('hidden');
     await loadQuestData(questId);
   } else {
-    // Creator Mode
     document.getElementById('creator-view').classList.remove('hidden');
     document.getElementById('quest-view').classList.add('hidden');
     initCreatorView();
@@ -44,7 +57,123 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 /* ============================================================
-   IMAGE CROPPING CONTROLLER (CROPPER.JS)
+   AUDIO TOGGLE CONTROLLER (PLAY / PAUSE)
+   ============================================================ */
+vinylBtn.addEventListener('click', () => {
+  if (bgm.paused) {
+    bgm.play().then(() => {
+      isAudioPlaying = true;
+      vinylBtn.classList.remove('paused');
+    }).catch(e => console.error("Audio error:", e));
+  } else {
+    bgm.pause();
+    isAudioPlaying = false;
+    vinylBtn.classList.add('paused');
+  }
+});
+
+/* ============================================================
+   CREATOR MODE CONTROLLER
+   ============================================================ */
+function initCreatorView() {
+  // Preset Message Helper
+  const presetSelector = document.getElementById('intro-presets');
+  const introArea = document.getElementById('in-intro-content');
+  presetSelector.addEventListener('change', () => {
+    if (presetSelector.value === 'p1') introArea.value = "Tumi thik koto boro boka sheta shudhu ami jani! Happy Birthday bondhu! 🎉";
+    if (presetSelector.value === 'p2') introArea.value = "Chobigulor moddhe onek sundor muhurto lukiye ache... Shuvo Jonmodin! ❤️";
+    if (presetSelector.value === 'p3') introArea.value = "Ajker din ta shudhu tomar! Ekta choto secret quest toiri kora holo, shob level paar koro! 🚀";
+  });
+
+  // Hero Crop (1:1)
+  document.getElementById('in-hero-file').addEventListener('change', (e) => {
+    if (e.target.files[0]) {
+      openCropper(e.target.files[0], 1, (blob) => {
+        heroBlob = blob;
+        const prev = document.getElementById('crop-preview-hero');
+        prev.src = URL.createObjectURL(blob);
+        prev.classList.remove('hidden');
+      });
+    }
+  });
+
+  // Level 1 Slideshow multi-select
+  document.getElementById('in-level1-files').addEventListener('change', (e) => {
+    Array.from(e.target.files).forEach(f => level1Files.push(f));
+    renderPreviewGrid(level1Files, document.getElementById('slideshow-preview-grid'));
+  });
+
+  // Puzzle Image Crop (1:1)
+  document.getElementById('in-level3-file').addEventListener('change', (e) => {
+    if (e.target.files[0]) {
+      openCropper(e.target.files[0], 1, (blob) => {
+        puzzleBlob = blob;
+        const prev = document.getElementById('crop-preview-puzzle');
+        prev.src = URL.createObjectURL(blob);
+        prev.classList.remove('hidden');
+      });
+    }
+  });
+
+  // Level 6 Polaroids multi-select
+  document.getElementById('in-level6-files').addEventListener('change', (e) => {
+    Array.from(e.target.files).forEach(f => level6Files.push(f));
+    renderPreviewGrid(level6Files, document.getElementById('polaroid-preview-grid'));
+  });
+
+  // Sample Data Button Filler
+  document.getElementById('btn-fill-sample').addEventListener('click', fillSampleData);
+
+  // Form Submit
+  document.getElementById('quest-form').addEventListener('submit', handleFormSubmit);
+}
+
+function renderPreviewGrid(arr, container) {
+  container.innerHTML = '';
+  arr.forEach((item, idx) => {
+    const src = typeof item === 'string' ? item : URL.createObjectURL(item);
+    const div = document.createElement('div');
+    div.className = 'preview-item';
+    div.innerHTML = `<img src="${src}"/><button type="button" class="btn-del-img">&times;</button>`;
+    div.querySelector('.btn-del-img').addEventListener('click', () => {
+      arr.splice(idx, 1);
+      renderPreviewGrid(arr, container);
+    });
+    container.appendChild(div);
+  });
+}
+
+// Fill Sample Data Function
+function fillSampleData() {
+  document.getElementById('in-star-name').value = "Riya";
+  document.getElementById('in-sender-name').value = "Rahul";
+  document.getElementById('in-sender-email').value = "rahul@example.com";
+  document.getElementById('in-intro-content').value = "Happy Birthday Riya! Tomar jonno ekta special interactive adventure toiri korechi. Enjoy koro! ✨";
+  document.getElementById('in-level1-note').value = "Amader eksathe katano shobcheye priyo muhurtogulo ekhane ache... 📸";
+  document.getElementById('in-level2-intro').value = "Tomar token niye maze ta paar kore birthday cake khuje ber koro! 🎂";
+  document.getElementById('in-level2-success').value = "Wah! Cake ta shobai mile khabo, eka eka na kintu! 😂";
+  document.getElementById('in-level3-desc').value = "45 second somoy ache, chobi ta thik koro! ⏱️";
+  document.getElementById('in-level4-question').value = "Ami ki tomar shobcheye bhalo bondhu?";
+  document.getElementById('in-level5-word').value = "BEST FRIEND";
+  document.getElementById('in-level6-letter').value = "Jibone onek bondhu ashe jay, kintu tomar moto manush paowa bhagger bapar. Sob somoy ei bhabe hashi khushi theko! Happy Birthday! ❤️";
+  document.getElementById('bgm-preset-selector').value = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3";
+
+  // Dummy URLs for preview
+  const sampleUrls = [
+    "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500",
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500",
+    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500"
+  ];
+  level1Files = [...sampleUrls];
+  level6Files = [...sampleUrls];
+  renderPreviewGrid(level1Files, document.getElementById('slideshow-preview-grid'));
+  renderPreviewGrid(level6Files, document.getElementById('polaroid-preview-grid'));
+
+  alert("⚡ Sample data filled! Ekdom niche giye 'Generate Quest Link' button e click korun.");
+}
+
+/* ============================================================
+   CROPPER HANDLER
    ============================================================ */
 function openCropper(file, aspectRatio, callback) {
   const modal = document.getElementById('crop-modal');
@@ -82,164 +211,111 @@ document.getElementById('btn-cancel-crop').addEventListener('click', () => {
 });
 
 /* ============================================================
-   CREATOR MODE CONTROLLER & SUPABASE STORAGE UPLOADER
+   SUPABASE UPLOAD & FORM SUBMIT
    ============================================================ */
-let heroBlob = null;
-let puzzleBlob = null;
-
-function initCreatorView() {
-  // Preset selector
-  const presetSelector = document.getElementById('intro-presets');
-  const introArea = document.getElementById('in-intro-content');
-  presetSelector.addEventListener('change', () => {
-    if (presetSelector.value === 'p1') introArea.value = "നിന്നെപ്പോലൊരു വട്ടിനെ സഹിക്കാൻ എന്നെപ്പോലെ വലിയൊരു മനസ്സ് തന്നെ വേണം! ആ പുണ്യപ്രവൃത്തി ഞാൻ ഇനിയും തുടരും... Happy Birthday!";
-    if (presetSelector.value === 'p2') introArea.value = "ഓരോ ചിത്രത്തിനും പറയാൻ ഒരു കഥയുണ്ട്... നമ്മുടെ സൗഹൃദം എന്നും ഇങ്ങനെ തന്നെ തിളങ്ങി നിൽക്കട്ടെ! 🎂✨";
-    if (presetSelector.value === 'p3') introArea.value = "ഇന്ന് നിന്റെ ദിനമാണ്! നിനക്കായി ഒരുക്കിയ ചെറിയൊരു രഹസ്യ ലോകത്തേക്ക് സ്വാഗതം. ലെവലുകൾ പൂർത്തിയാക്കി സമ്മാനം നേടൂ! 🚀";
-  });
-
-  // Hero Crop (1:1)
-  document.getElementById('in-hero-file').addEventListener('change', (e) => {
-    if (e.target.files[0]) {
-      openCropper(e.target.files[0], 1, (blob) => {
-        heroBlob = blob;
-        const prev = document.getElementById('crop-preview-hero');
-        prev.src = URL.createObjectURL(blob);
-        prev.classList.remove('hidden');
-      });
-    }
-  });
-
-  // Level 1 Multi-file selection & Preview
-  const l1Input = document.getElementById('in-level1-files');
-  const l1Grid = document.getElementById('slideshow-preview-grid');
-  l1Input.addEventListener('change', (e) => {
-    Array.from(e.target.files).forEach(f => level1Files.push(f));
-    renderPreviewGrid(level1Files, l1Grid);
-  });
-
-  // Puzzle Image Crop (1:1)
-  document.getElementById('in-level3-file').addEventListener('change', (e) => {
-    if (e.target.files[0]) {
-      openCropper(e.target.files[0], 1, (blob) => {
-        puzzleBlob = blob;
-        const prev = document.getElementById('crop-preview-puzzle');
-        prev.src = URL.createObjectURL(blob);
-        prev.classList.remove('hidden');
-      });
-    }
-  });
-
-  // Level 6 Polaroids
-  const l6Input = document.getElementById('in-level6-files');
-  const l6Grid = document.getElementById('polaroid-preview-grid');
-  l6Input.addEventListener('change', (e) => {
-    Array.from(e.target.files).forEach(f => level6Files.push(f));
-    renderPreviewGrid(level6Files, l6Grid);
-  });
-
-  // Form Submit
-  document.getElementById('quest-form').addEventListener('submit', handleFormSubmit);
-}
-
-function renderPreviewGrid(arr, container) {
-  container.innerHTML = '';
-  arr.forEach((file, idx) => {
-    const div = document.createElement('div');
-    div.className = 'preview-item';
-    div.innerHTML = `<img src="${URL.createObjectURL(file)}"/><button type="button" class="btn-del-img">&times;</button>`;
-    div.querySelector('.btn-del-img').addEventListener('click', () => {
-      arr.splice(idx, 1);
-      renderPreviewGrid(arr, container);
-    });
-    container.appendChild(div);
-  });
-}
-
-// Upload Helper to Supabase Storage
 async function uploadToStorage(fileOrBlob, folder = 'uploads') {
   if (!fileOrBlob) return null;
+  if (typeof fileOrBlob === 'string') return fileOrBlob; // Already URL
   const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-  const { data, error } = await supabaseClient.storage.from('quest-media').upload(fileName, fileOrBlob);
+  const { error } = await supabaseClient.storage.from('quest-media').upload(fileName, fileOrBlob);
   if (error) {
-    console.error('Storage Error:', error);
+    console.error('Storage Upload Error:', error);
     return null;
   }
-  const { data: publicUrlData } = supabaseClient.storage.from('quest-media').getPublicUrl(fileName);
-  return publicUrlData.publicUrl;
+  const { data } = supabaseClient.storage.from('quest-media').getPublicUrl(fileName);
+  return data.publicUrl;
 }
 
 async function handleFormSubmit(e) {
   e.preventDefault();
   const btn = document.getElementById('btn-create-quest');
   btn.disabled = true;
-  btn.innerText = 'അപ്‌ലോഡ് ചെയ്യുന്നു... ദയവായി കാത്തിരിക്കൂ ⏳';
+  btn.innerText = 'Uploading files & Generating link... ⏳';
 
   try {
-    // 1. Upload Hero Image & Puzzle Image
-    const heroUrl = await uploadToStorage(heroBlob || document.getElementById('in-hero-file').files[0], 'avatars');
-    const puzzleUrl = await uploadToStorage(puzzleBlob || document.getElementById('in-level3-file').files[0], 'puzzles');
-    
-    // 2. Upload BGM
-    let bgmUrl = null;
-    const bgmFile = document.getElementById('in-bgm-file').files[0];
-    if (bgmFile) bgmUrl = await uploadToStorage(bgmFile, 'audio');
+    // 1. Upload Hero & Puzzle images
+    let heroUrl = heroBlob ? await uploadToStorage(heroBlob, 'avatars') : null;
+    if (!heroUrl && typeof level1Files[0] === 'string') heroUrl = level1Files[0];
 
-    // 3. Upload Level 1 Images
+    let puzzleUrl = puzzleBlob ? await uploadToStorage(puzzleBlob, 'puzzles') : null;
+    if (!puzzleUrl && typeof level1Files[1] === 'string') puzzleUrl = level1Files[1];
+
+    // 2. Audio selection (Preset or Upload)
+    let finalBgmUrl = document.getElementById('bgm-preset-selector').value || null;
+    const uploadedBgm = document.getElementById('in-bgm-file').files[0];
+    if (uploadedBgm) {
+      finalBgmUrl = await uploadToStorage(uploadedBgm, 'audio');
+    }
+
+    // 3. Upload Level 1 Slideshow images
     const l1Urls = [];
     for (const f of level1Files) {
       const url = await uploadToStorage(f, 'slideshow');
       if (url) l1Urls.push(url);
     }
 
-    // 4. Upload Level 6 Polaroids
+    // 4. Upload Level 6 Polaroid images
     const l6Urls = [];
     for (const f of level6Files) {
       const url = await uploadToStorage(f, 'polaroids');
       if (url) l6Urls.push(url);
     }
 
-    // 5. Insert Record to Supabase
+    // 5. Save to Supabase Table
     const payload = {
       star_name: document.getElementById('in-star-name').value,
       sender_name: document.getElementById('in-sender-name').value,
       sender_email: document.getElementById('in-sender-email').value,
-      hero_image: heroUrl,
-      bgm_url: bgmUrl,
+      hero_image: heroUrl || 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500',
+      bgm_url: finalBgmUrl,
       intro_content: document.getElementById('in-intro-content').value,
-      level1_images: l1Urls,
+      level1_images: l1Urls.length ? l1Urls : ['https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500'],
       level1_note: document.getElementById('in-level1-note').value,
       level2_intro: document.getElementById('in-level2-intro').value,
       level2_success: document.getElementById('in-level2-success').value,
-      level3_image: puzzleUrl,
+      level3_image: puzzleUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500',
       level3_desc: document.getElementById('in-level3-desc').value,
       level4_question: document.getElementById('in-level4-question').value,
       level5_secret_word: (document.getElementById('in-level5-word').value || 'SWEET HEART').toUpperCase(),
       level6_letter: document.getElementById('in-level6-letter').value,
-      level6_polaroids: l6Urls
+      level6_polaroids: l6Urls.length ? l6Urls : ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500']
     };
 
     const { data, error } = await supabaseClient.from('quests').insert([payload]).select().single();
     if (error) throw error;
 
-    // Generated Link
     const generatedUrl = `${window.location.origin}${window.location.pathname}?id=${data.id}`;
-    alert(`🎉 നിങ്ങളുടെ ബർത്ത്‌ഡേ ക്വസ്റ്റ് റെഡി!\n\nഈ ലിങ്ക് കോപ്പി ചെയ്ത് സുഹൃത്തിന് അയച്ചു കൊടുക്കൂ:\n${generatedUrl}`);
-    window.location.href = generatedUrl;
+    
+    // Open Share Modal with Copy Link Option
+    const shareModal = document.getElementById('share-modal');
+    const linkInput = document.getElementById('generated-link-input');
+    linkInput.value = generatedUrl;
+    shareModal.classList.remove('hidden');
+
+    document.getElementById('btn-copy-link').onclick = () => {
+      linkInput.select();
+      navigator.clipboard.writeText(generatedUrl);
+      alert('Link copied to clipboard! 🎉');
+    };
+
+    document.getElementById('btn-open-quest').onclick = () => {
+      window.location.href = generatedUrl;
+    };
 
   } catch (err) {
-    alert('അപ്‌ലോഡ് ചെയ്യുന്നതിൽ തടസ്സമുണ്ടായി. വീണ്ടും ശ്രമിക്കുക: ' + err.message);
+    alert('Upload failed: ' + err.message);
     btn.disabled = false;
-    btn.innerText = 'Quest ലിങ്ക് ജനറേറ്റ് ചെയ്യുക 🚀';
+    btn.innerText = 'Generate Quest Link 🚀';
   }
 }
 
 /* ============================================================
-   PLAY MODE: DATA LOADER & LEVEL CONTROLLER
+   PLAY MODE: DATA LOADER
    ============================================================ */
 async function loadQuestData(id) {
   const { data, error } = await supabaseClient.from('quests').select('*').eq('id', id).single();
   if (error || !data) {
-    alert('ക്വസ്റ്റ് കണ്ടെത്താനായില്ല!');
+    alert('Quest not found!');
     return;
   }
   questData = data;
@@ -249,55 +325,73 @@ async function loadQuestData(id) {
 function bindQuestToDOM() {
   document.getElementById('display-star-name').innerText = questData.star_name;
   document.getElementById('display-sender-name').innerText = questData.sender_name;
+  document.getElementById('feedback-receiver-name').innerText = questData.sender_name;
   document.getElementById('display-intro-content').innerText = questData.intro_content || '';
-  if (questData.hero_image) document.getElementById('display-hero-img').src = questData.hero_image;
+  
+  // Hero Image
+  const heroImg = document.getElementById('display-hero-img');
+  heroImg.src = questData.hero_image;
+  heroImg.onerror = () => { heroImg.src = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500'; };
 
-  // Custom BGM
+  // Audio setup
   if (questData.bgm_url) {
-    const bgmElem = document.getElementById('bgm');
-    bgmElem.src = questData.bgm_url;
+    bgm.src = questData.bgm_url;
   }
 
   // Level 1 Slideshow Bind
   const track = document.getElementById('carousel-track');
   track.innerHTML = '';
-  (questData.level1_images || []).forEach(url => {
-    track.innerHTML += `<div class="carousel-slide"><img src="${url}"/></div>`;
+  const images = (questData.level1_images && questData.level1_images.length) 
+    ? questData.level1_images 
+    : ['https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500'];
+
+  images.forEach(url => {
+    track.innerHTML += `<div class="carousel-slide"><img src="${url}" onerror="this.src='https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500'"/></div>`;
   });
   document.getElementById('display-level1-note').innerText = questData.level1_note || '';
   initCarouselEngine();
 
-  // Level 2 Bind
+  // Level 2 Maze texts
   document.getElementById('display-level2-intro').innerText = questData.level2_intro || '';
   document.getElementById('display-level2-success').innerText = questData.level2_success || '';
 
-  // Level 3 Bind
+  // Level 3 Puzzle text
   document.getElementById('display-level3-desc').innerText = questData.level3_desc || '';
 
-  // Level 4 Bind
+  // Level 4 Trap Question
   document.getElementById('display-level4-question').innerText = questData.level4_question || '';
 
-  // Level 5 Bind
-  document.getElementById('display-secret-word').innerText = `"${questData.level5_secret_word}"`;
+  // Level 5 Morse Code Visual Display
+  const word = (questData.level5_secret_word || 'BEST FRIEND').toUpperCase();
+  document.getElementById('display-secret-word').innerText = `"${word}"`;
+  
+  let morseCodeDisplay = '';
+  for (const char of word) {
+    morseCodeDisplay += (MORSE_MAP[char] || '') + '  ';
+  }
+  document.getElementById('morse-dots-display').innerText = morseCodeDisplay;
 
-  // Level 6 Bind
+  // Level 6 Finale
   document.getElementById('display-level6-letter').innerText = questData.level6_letter || '';
   const polGrid = document.getElementById('display-polaroid-grid');
   polGrid.innerHTML = '';
-  (questData.level6_polaroids || []).forEach(url => {
+  const pols = (questData.level6_polaroids && questData.level6_polaroids.length)
+    ? questData.level6_polaroids
+    : ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'];
+
+  pols.forEach(url => {
     polGrid.innerHTML += `
       <div class="polaroid-item">
-        <img src="${url}" loading="lazy"/>
+        <img src="${url}" onerror="this.src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'"/>
         <span style="font-size:0.75rem;font-weight:bold;margin-top:4px;display:block;">Sweet Memory ❤️</span>
       </div>`;
   });
 
-  // Ambient Particles
   initAmbientDust();
 }
 
 /* ============================================================
-   LEVEL 2: PHOTO RUNNER MAZE ENGINE
+   LEVEL 2: MAZE GAME (WITH AVATAR TOKEN)
    ============================================================ */
 const mazeCanvas = document.getElementById('maze-canvas');
 const mazeCtx = mazeCanvas ? mazeCanvas.getContext('2d') : null;
@@ -319,6 +413,7 @@ let mazeWon = false;
 
 function initMazeGame() {
   if (questData && questData.hero_image) {
+    runnerImg.crossOrigin = "anonymous";
     runnerImg.src = questData.hero_image;
   }
   playerPos = { x: 0, y: 0 };
@@ -340,12 +435,12 @@ function drawMaze() {
       } else if (mazeGrid[r][c] === 2) {
         mazeCtx.font = '18px sans-serif';
         mazeCtx.textAlign = 'center';
-        mazeCtx.fillText('🎂', c * cellSize + 15, r * cellSize + 20);
+        mazeCtx.fillText('🎂', c * cellSize + 15, r * cellSize + 21);
       }
     }
   }
 
-  // Draw Avatar Token
+  // Draw Avatar circle
   const px = playerPos.x * cellSize + 15;
   const py = playerPos.y * cellSize + 15;
   mazeCtx.save();
@@ -377,7 +472,6 @@ function moveMazePlayer(dx, dy) {
   }
 }
 
-// Maze Controls
 ['d-up', 'd-down', 'd-left', 'd-right'].forEach(id => {
   const elem = document.getElementById(id);
   if (elem) {
@@ -391,7 +485,7 @@ function moveMazePlayer(dx, dy) {
 });
 
 /* ============================================================
-   LEVEL 3: PHOTO PUZZLE & TROLL TIMER
+   LEVEL 3: PHOTO PUZZLE
    ============================================================ */
 let puzzleState = [1, 2, 0, 3, 4, 5, 6, 8, 7];
 let timerCountdown = 45;
@@ -408,7 +502,7 @@ function initPuzzleGame() {
   clearInterval(puzzleTimer);
   puzzleTimer = setInterval(() => {
     timerCountdown--;
-    document.getElementById('puzzle-timer').innerText = `⏳ സമയം: ${timerCountdown}s`;
+    document.getElementById('puzzle-timer').innerText = `⏳ Time: ${timerCountdown}s`;
     if (timerCountdown <= 0) {
       clearInterval(puzzleTimer);
       document.getElementById('troll-modal').classList.remove('hidden');
@@ -419,7 +513,7 @@ function initPuzzleGame() {
 function renderPuzzleBoard() {
   const board = document.getElementById('puzzle-board');
   board.innerHTML = '';
-  const puzzleImg = questData && questData.level3_image ? questData.level3_image : 'assets/images/2.jpg';
+  const puzzleImg = (questData && questData.level3_image) ? questData.level3_image : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500';
 
   puzzleState.forEach((val, idx) => {
     const tile = document.createElement('div');
@@ -470,19 +564,20 @@ document.getElementById('retry-timer-btn').addEventListener('click', () => {
 });
 
 /* ============================================================
-   LEVEL 4: EXPANDED RUNAWAY NO BUTTON
+   LEVEL 4: CONTROLLED RUNAWAY NO BUTTON
    ============================================================ */
 const noBtn = document.getElementById('no-btn');
 const yesBtn = document.getElementById('yes-btn');
 const trapArena = document.getElementById('trap-arena');
 
 function runawayNo() {
-  const w = trapArena.clientWidth - noBtn.offsetWidth - 20;
-  const h = trapArena.clientHeight - noBtn.offsetHeight - 20;
+  const w = trapArena.clientWidth - 100;
+  const h = trapArena.clientHeight - 55;
   const rx = Math.max(10, Math.floor(Math.random() * w));
   const ry = Math.max(10, Math.floor(Math.random() * h));
   noBtn.style.left = `${rx}px`;
   noBtn.style.top = `${ry}px`;
+  noBtn.style.right = 'auto';
 }
 noBtn.addEventListener('mouseover', runawayNo);
 noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); runawayNo(); });
@@ -495,63 +590,15 @@ yesBtn.addEventListener('click', () => {
 });
 
 /* ============================================================
-   LEVEL 5: DYNAMIC TEXT TO MORSE AUDIO & BEACON
+   LEVEL 5: MORSE CODE DECODE TRIGGER
    ============================================================ */
-const MORSE_MAP = {
-  'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
-  'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
-  'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
-  'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
-  'Y': '-.--', 'Z': '--..', ' ': ' '
-};
-
-function playMorseTone(duration) {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = 'sine';
-  osc.frequency.value = 650;
-  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + duration);
-}
-
-document.getElementById('play-morse-btn').addEventListener('click', async () => {
-  const btn = document.getElementById('play-morse-btn');
-  btn.disabled = true;
-  const light = document.getElementById('light-beacon');
-  const phrase = (questData.level5_secret_word || 'LOVE').toUpperCase();
-
-  for (const char of phrase) {
-    const code = MORSE_MAP[char] || '';
-    for (const symbol of code) {
-      if (symbol === '.') {
-        light.classList.add('lit');
-        playMorseTone(0.1);
-        await new Promise(r => setTimeout(r, 100));
-        light.classList.remove('lit');
-      } else if (symbol === '-') {
-        light.classList.add('lit');
-        playMorseTone(0.3);
-        await new Promise(r => setTimeout(r, 300));
-        light.classList.remove('lit');
-      }
-      await new Promise(r => setTimeout(r, 120));
-    }
-    await new Promise(r => setTimeout(r, 300));
-  }
-  btn.disabled = false;
-});
-
 document.getElementById('decode-btn').addEventListener('click', () => {
   document.getElementById('decoded-card').classList.remove('hidden');
-  confetti({ particleCount: 70, spread: 50 });
+  confetti({ particleCount: 80, spread: 60 });
 });
 
 /* ============================================================
-   LEVEL 6: CANDLE BLOW, FEEDBACK & CELEBRATE AGAIN
+   LEVEL 6: CANDLE & FEEDBACK
    ============================================================ */
 const candle = document.getElementById('candle');
 candle.addEventListener('click', () => {
@@ -564,7 +611,6 @@ candle.addEventListener('click', () => {
   }
 });
 
-// Feedback Dispatcher to Supabase
 document.getElementById('btn-send-feedback').addEventListener('click', async () => {
   const fText = document.getElementById('feedback-text').value;
   if (!fText.trim()) return;
@@ -586,7 +632,7 @@ function celebrateAgain() {
 }
 
 /* ============================================================
-   GLOBAL NAVIGATION, AUDIO & PARTICLES
+   GLOBAL NAVIGATION
    ============================================================ */
 function goToLevel(target) {
   const cur = document.getElementById(`level-${currentLevel}`);
@@ -604,12 +650,15 @@ function goToLevel(target) {
 }
 
 document.getElementById('start-quest-btn').addEventListener('click', () => {
-  const bgm = document.getElementById('bgm');
-  bgm.play().then(() => document.getElementById('vinyl-btn').classList.remove('paused')).catch(() => {});
+  if (bgm.src) {
+    bgm.play().then(() => {
+      vinylBtn.classList.remove('paused');
+      isAudioPlaying = true;
+    }).catch(e => console.log("Audio play blocked by browser:", e));
+  }
   goToLevel(1);
 });
 
-// Slideshow Navigation
 function initCarouselEngine() {
   const track = document.getElementById('carousel-track');
   const slides = Array.from(track.children);
@@ -633,14 +682,13 @@ function initCarouselEngine() {
   document.getElementById('car-prev').addEventListener('click', () => update((cur - 1 + slides.length) % slides.length));
 }
 
-// Background Floating Ambient Particles
 function initAmbientDust() {
   const canvas = document.getElementById('ambient-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  let pts = Array.from({ length: 35 }, () => ({
+  let pts = Array.from({ length: 30 }, () => ({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
     r: Math.random() * 2 + 0.5,
