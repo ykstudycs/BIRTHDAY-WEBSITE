@@ -1,33 +1,42 @@
 /**
  * ============================================================
- * THE BIRTHDAY QUEST - FIXED DYNAMIC SCRIPT
+ * THE BIRTHDAY QUEST - LIGHT THEME ENGINE
  * ============================================================
  */
 
-// 1. SUPABASE CREDENTIALS (আপনার URL এবং anon public key)
+// 1. SUPABASE CREDENTIALS
 const SUPABASE_URL = "https://uedytnpsodsgwtcjhjry.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_URIryt2eGjUWVjZlg5qXtQ_viYHrUHC";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// State Variables
+// 2. EMAILJS CREDENTIALS (Paste your IDs here)
+const EMAILJS_PUBLIC_KEY = "YOUR_EMAILJS_PUBLIC_KEY";
+const EMAILJS_SERVICE_ID = "YOUR_EMAILJS_SERVICE_ID";
+const EMAILJS_TEMPLATE_ID = "YOUR_EMAILJS_TEMPLATE_ID";
+
+if (window.emailjs && EMAILJS_PUBLIC_KEY !== "YOUR_EMAILJS_PUBLIC_KEY") {
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+}
+
+// Global Variables
 let currentLevel = 0;
 const totalLevels = 6;
 let questData = null;
 let cropperInstance = null;
 let activeCropCallback = null;
 
-// Audio element & toggle state
 const bgm = document.getElementById('bgm');
 const vinylBtn = document.getElementById('vinyl-btn');
 let isAudioPlaying = false;
 
-// Blobs & File Arrays
 let heroBlob = null;
 let puzzleBlob = null;
 let level1Files = [];
 let level6Files = [];
 
-// Morse Map
+let decodeAttempts = 3;
+
+// Morse Alphabet Map
 const MORSE_MAP = {
   'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
   'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
@@ -39,7 +48,7 @@ const MORSE_MAP = {
 };
 
 /* ============================================================
-   ROUTING: CREATOR VIEW vs QUEST VIEW
+   ROUTING
    ============================================================ */
 window.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -57,14 +66,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 /* ============================================================
-   AUDIO TOGGLE CONTROLLER (PLAY / PAUSE)
+   AUDIO PLAY / PAUSE CONTROLLER
    ============================================================ */
 vinylBtn.addEventListener('click', () => {
   if (bgm.paused) {
     bgm.play().then(() => {
       isAudioPlaying = true;
       vinylBtn.classList.remove('paused');
-    }).catch(e => console.error("Audio error:", e));
+    }).catch(e => console.error("Soundtrack blocked:", e));
   } else {
     bgm.pause();
     isAudioPlaying = false;
@@ -76,16 +85,58 @@ vinylBtn.addEventListener('click', () => {
    CREATOR MODE CONTROLLER
    ============================================================ */
 function initCreatorView() {
-  // Preset Message Helper
-  const presetSelector = document.getElementById('intro-presets');
-  const introArea = document.getElementById('in-intro-content');
+  const presetSelector = document.getElementById('bgm-preset-selector');
+  const uploadInput = document.getElementById('in-bgm-file');
+
+  // Mutual Exclusive Audio Select
   presetSelector.addEventListener('change', () => {
-    if (presetSelector.value === 'p1') introArea.value = "Tumi thik koto boro boka sheta shudhu ami jani! Happy Birthday bondhu! 🎉";
-    if (presetSelector.value === 'p2') introArea.value = "Chobigulor moddhe onek sundor muhurto lukiye ache... Shuvo Jonmodin! ❤️";
-    if (presetSelector.value === 'p3') introArea.value = "Ajker din ta shudhu tomar! Ekta choto secret quest toiri kora holo, shob level paar koro! 🚀";
+    if (presetSelector.value !== "") {
+      uploadInput.disabled = true;
+      uploadInput.value = "";
+    } else {
+      uploadInput.disabled = false;
+    }
   });
 
-  // Hero Crop (1:1)
+  uploadInput.addEventListener('change', () => {
+    if (uploadInput.files.length > 0) {
+      presetSelector.disabled = true;
+      presetSelector.value = "";
+    } else {
+      presetSelector.disabled = false;
+    }
+  });
+
+  // Pure English Preset Selectors
+  setupPresetListener('intro-presets', 'in-intro-content', {
+    en_1: "May your birthday be filled with endless smiles, pure joy, and everything you have ever dreamed of! Happy Birthday!",
+    en_2: "It takes an absolute saint to handle someone as crazy as you. Gladly signing up for another year of madness! Happy Birthday!",
+    en_3: "Welcome to your personalized birthday adventure! Clear every secret stage to unlock your grand celebration!",
+    en_4: "Today is all about you! Grateful for every memory, late-night laugh, and adventure we share. Happy Birthday!"
+  });
+
+  setupPresetListener('level1-presets', 'in-level1-note', {
+    en_1: "Every picture tells a story of unforgettable laughs, shared moments, and our timeless bond!",
+    en_2: "Looking back at these memories reminds me how lucky I am to have an adventure partner like you!",
+    en_3: "A walk down memory lane... So grateful for every chapter we have written together!",
+    en_4: "Frames of pure happiness! Let us promise to make twice as many memories this coming year!"
+  });
+
+  setupPresetListener('level2-presets', 'in-level2-intro', {
+    en_1: "Guide your token to the birthday cake! But remember, eating the whole slice alone is strictly forbidden!",
+    en_2: "Navigate the maze! Your birthday treat is at the finish line, so do not let the walls slow you down!",
+    en_3: "A true champion finds their way to the slice in seconds. Show me your gaming reflexes!",
+    en_4: "Let the birthday games begin! Steer your mini avatar directly to that delicious cake!"
+  });
+
+  setupPresetListener('level6-presets', 'in-level6-letter', {
+    en_1: "In a world of fleeting connections, your presence is a rare and comforting blessing. Thank you for standing by me through thick and thin, for lighting up the darkest days, and for being your wonderfully authentic self. May this year bring you boundless success, health, and limitless joy!",
+    en_2: "Happy Birthday! As another beautiful chapter begins, always remember how deeply you are appreciated and admired. Keep inspiring, keep chasing big dreams, and never lose that bright, contagious spark of yours!",
+    en_3: "Words will always fall short of expressing how much your friendship means to me. Thank you for every unscripted laugh, every heartfelt talk, and for making life ten times more vibrant. Have the most extraordinary birthday!",
+    en_4: "To the person who makes every ordinary moment memorable: Happy Birthday! You deserve all the peace, laughter, and triumph the universe has to offer. Excited for all our adventures ahead!"
+  });
+
+  // Hero Avatar Crop (1:1)
   document.getElementById('in-hero-file').addEventListener('change', (e) => {
     if (e.target.files[0]) {
       openCropper(e.target.files[0], 1, (blob) => {
@@ -97,13 +148,13 @@ function initCreatorView() {
     }
   });
 
-  // Level 1 Slideshow multi-select
+  // Slideshow Multi-select
   document.getElementById('in-level1-files').addEventListener('change', (e) => {
     Array.from(e.target.files).forEach(f => level1Files.push(f));
     renderPreviewGrid(level1Files, document.getElementById('slideshow-preview-grid'));
   });
 
-  // Puzzle Image Crop (1:1)
+  // Puzzle Crop (1:1)
   document.getElementById('in-level3-file').addEventListener('change', (e) => {
     if (e.target.files[0]) {
       openCropper(e.target.files[0], 1, (blob) => {
@@ -115,17 +166,25 @@ function initCreatorView() {
     }
   });
 
-  // Level 6 Polaroids multi-select
+  // Polaroid Multi-select
   document.getElementById('in-level6-files').addEventListener('change', (e) => {
     Array.from(e.target.files).forEach(f => level6Files.push(f));
     renderPreviewGrid(level6Files, document.getElementById('polaroid-preview-grid'));
   });
 
-  // Sample Data Button Filler
+  // Sample Data Button
   document.getElementById('btn-fill-sample').addEventListener('click', fillSampleData);
 
-  // Form Submit
+  // Form Submission
   document.getElementById('quest-form').addEventListener('submit', handleFormSubmit);
+}
+
+function setupPresetListener(selectId, targetId, dict) {
+  const sel = document.getElementById(selectId);
+  const target = document.getElementById(targetId);
+  sel.addEventListener('change', () => {
+    if (dict[sel.value]) target.value = dict[sel.value];
+  });
 }
 
 function renderPreviewGrid(arr, container) {
@@ -143,22 +202,18 @@ function renderPreviewGrid(arr, container) {
   });
 }
 
-// Fill Sample Data Function
 function fillSampleData() {
-  document.getElementById('in-star-name').value = "Riya";
-  document.getElementById('in-sender-name').value = "Rahul";
-  document.getElementById('in-sender-email').value = "rahul@example.com";
-  document.getElementById('in-intro-content').value = "Happy Birthday Riya! Tomar jonno ekta special interactive adventure toiri korechi. Enjoy koro! ✨";
-  document.getElementById('in-level1-note').value = "Amader eksathe katano shobcheye priyo muhurtogulo ekhane ache... 📸";
-  document.getElementById('in-level2-intro').value = "Tomar token niye maze ta paar kore birthday cake khuje ber koro! 🎂";
-  document.getElementById('in-level2-success').value = "Wah! Cake ta shobai mile khabo, eka eka na kintu! 😂";
-  document.getElementById('in-level3-desc').value = "45 second somoy ache, chobi ta thik koro! ⏱️";
-  document.getElementById('in-level4-question').value = "Ami ki tomar shobcheye bhalo bondhu?";
+  document.getElementById('in-star-name').value = "Jessica";
+  document.getElementById('in-sender-name').value = "Arthur";
+  document.getElementById('in-sender-email').value = "arthur.example@gmail.com";
+  document.getElementById('in-intro-content').value = "May your birthday be filled with endless smiles, pure joy, and everything you have ever dreamed of! Happy Birthday! ✨";
+  document.getElementById('in-level1-note').value = "Every picture tells a story of unforgettable laughs, shared moments, and our timeless bond! 📸";
+  document.getElementById('in-level2-intro').value = "Guide your token to the birthday cake! But remember, eating the whole slice alone is strictly forbidden! 🍰";
+  document.getElementById('in-level3-desc').value = "Rearrange your photo within 45 seconds to unlock the secret chamber! ⏱️";
+  document.getElementById('in-level4-question').value = "Do you admit that I am the single coolest and most caring friend you have? 😜";
   document.getElementById('in-level5-word').value = "BEST FRIEND";
-  document.getElementById('in-level6-letter').value = "Jibone onek bondhu ashe jay, kintu tomar moto manush paowa bhagger bapar. Sob somoy ei bhabe hashi khushi theko! Happy Birthday! ❤️";
-  document.getElementById('bgm-preset-selector').value = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3";
+  document.getElementById('in-level6-letter').value = "In a world of fleeting connections, your presence is a rare and comforting blessing. Thank you for standing by me through thick and thin, for lighting up the darkest days, and for being your wonderfully authentic self. May this year bring you boundless success, health, and limitless joy! ❤️";
 
-  // Dummy URLs for preview
   const sampleUrls = [
     "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500",
     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500",
@@ -169,7 +224,10 @@ function fillSampleData() {
   renderPreviewGrid(level1Files, document.getElementById('slideshow-preview-grid'));
   renderPreviewGrid(level6Files, document.getElementById('polaroid-preview-grid'));
 
-  alert("⚡ Sample data filled! Ekdom niche giye 'Generate Quest Link' button e click korun.");
+  document.getElementById('bgm-preset-selector').value = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3";
+  document.getElementById('in-bgm-file').disabled = true;
+
+  alert("⚡ Sample data filled! Scroll down and click 'Generate Quest Link'.");
 }
 
 /* ============================================================
@@ -211,11 +269,11 @@ document.getElementById('btn-cancel-crop').addEventListener('click', () => {
 });
 
 /* ============================================================
-   SUPABASE UPLOAD & FORM SUBMIT
+   SUPABASE UPLOADER
    ============================================================ */
 async function uploadToStorage(fileOrBlob, folder = 'uploads') {
   if (!fileOrBlob) return null;
-  if (typeof fileOrBlob === 'string') return fileOrBlob; // Already URL
+  if (typeof fileOrBlob === 'string') return fileOrBlob;
   const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
   const { error } = await supabaseClient.storage.from('quest-media').upload(fileName, fileOrBlob);
   if (error) {
@@ -230,38 +288,33 @@ async function handleFormSubmit(e) {
   e.preventDefault();
   const btn = document.getElementById('btn-create-quest');
   btn.disabled = true;
-  btn.innerText = 'Uploading files & Generating link... ⏳';
+  btn.innerText = 'Creating Quest & Uploading... ⏳';
 
   try {
-    // 1. Upload Hero & Puzzle images
     let heroUrl = heroBlob ? await uploadToStorage(heroBlob, 'avatars') : null;
     if (!heroUrl && typeof level1Files[0] === 'string') heroUrl = level1Files[0];
 
     let puzzleUrl = puzzleBlob ? await uploadToStorage(puzzleBlob, 'puzzles') : null;
     if (!puzzleUrl && typeof level1Files[1] === 'string') puzzleUrl = level1Files[1];
 
-    // 2. Audio selection (Preset or Upload)
     let finalBgmUrl = document.getElementById('bgm-preset-selector').value || null;
     const uploadedBgm = document.getElementById('in-bgm-file').files[0];
     if (uploadedBgm) {
       finalBgmUrl = await uploadToStorage(uploadedBgm, 'audio');
     }
 
-    // 3. Upload Level 1 Slideshow images
     const l1Urls = [];
     for (const f of level1Files) {
       const url = await uploadToStorage(f, 'slideshow');
       if (url) l1Urls.push(url);
     }
 
-    // 4. Upload Level 6 Polaroid images
     const l6Urls = [];
     for (const f of level6Files) {
       const url = await uploadToStorage(f, 'polaroids');
       if (url) l6Urls.push(url);
     }
 
-    // 5. Save to Supabase Table
     const payload = {
       star_name: document.getElementById('in-star-name').value,
       sender_name: document.getElementById('in-sender-name').value,
@@ -285,8 +338,6 @@ async function handleFormSubmit(e) {
     if (error) throw error;
 
     const generatedUrl = `${window.location.origin}${window.location.pathname}?id=${data.id}`;
-    
-    // Open Share Modal with Copy Link Option
     const shareModal = document.getElementById('share-modal');
     const linkInput = document.getElementById('generated-link-input');
     linkInput.value = generatedUrl;
@@ -295,7 +346,7 @@ async function handleFormSubmit(e) {
     document.getElementById('btn-copy-link').onclick = () => {
       linkInput.select();
       navigator.clipboard.writeText(generatedUrl);
-      alert('Link copied to clipboard! 🎉');
+      alert('Private link copied to clipboard! 🎉');
     };
 
     document.getElementById('btn-open-quest').onclick = () => {
@@ -303,14 +354,14 @@ async function handleFormSubmit(e) {
     };
 
   } catch (err) {
-    alert('Upload failed: ' + err.message);
+    alert('Upload issue: ' + err.message);
     btn.disabled = false;
     btn.innerText = 'Generate Quest Link 🚀';
   }
 }
 
 /* ============================================================
-   PLAY MODE: DATA LOADER
+   PLAY MODE: DATA BINDING
    ============================================================ */
 async function loadQuestData(id) {
   const { data, error } = await supabaseClient.from('quests').select('*').eq('id', id).single();
@@ -327,18 +378,16 @@ function bindQuestToDOM() {
   document.getElementById('display-sender-name').innerText = questData.sender_name;
   document.getElementById('feedback-receiver-name').innerText = questData.sender_name;
   document.getElementById('display-intro-content').innerText = questData.intro_content || '';
-  
-  // Hero Image
+
   const heroImg = document.getElementById('display-hero-img');
   heroImg.src = questData.hero_image;
   heroImg.onerror = () => { heroImg.src = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500'; };
 
-  // Audio setup
   if (questData.bgm_url) {
     bgm.src = questData.bgm_url;
   }
 
-  // Level 1 Slideshow Bind
+  // Level 1
   const track = document.getElementById('carousel-track');
   track.innerHTML = '';
   const images = (questData.level1_images && questData.level1_images.length) 
@@ -351,27 +400,28 @@ function bindQuestToDOM() {
   document.getElementById('display-level1-note').innerText = questData.level1_note || '';
   initCarouselEngine();
 
-  // Level 2 Maze texts
+  // Level 2
   document.getElementById('display-level2-intro').innerText = questData.level2_intro || '';
   document.getElementById('display-level2-success').innerText = questData.level2_success || '';
 
-  // Level 3 Puzzle text
+  // Level 3
   document.getElementById('display-level3-desc').innerText = questData.level3_desc || '';
 
-  // Level 4 Trap Question
+  // Level 4
   document.getElementById('display-level4-question').innerText = questData.level4_question || '';
 
-  // Level 5 Morse Code Visual Display
+  // Level 5 Morse Code
   const word = (questData.level5_secret_word || 'BEST FRIEND').toUpperCase();
   document.getElementById('display-secret-word').innerText = `"${word}"`;
-  
+
   let morseCodeDisplay = '';
   for (const char of word) {
     morseCodeDisplay += (MORSE_MAP[char] || '') + '  ';
   }
   document.getElementById('morse-dots-display').innerText = morseCodeDisplay;
+  initMorseVerification(word);
 
-  // Level 6 Finale
+  // Level 6 Polaroids
   document.getElementById('display-level6-letter').innerText = questData.level6_letter || '';
   const polGrid = document.getElementById('display-polaroid-grid');
   polGrid.innerHTML = '';
@@ -379,11 +429,17 @@ function bindQuestToDOM() {
     ? questData.level6_polaroids
     : ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'];
 
-  pols.forEach(url => {
+  const captions = ['Happy Vibes ✨', 'Sweet Memory ❤️', 'Best Times 💫', 'Pure Gold 🌟', 'Forever Grateful 💖'];
+  const rotations = [-4, 3, -2, 5, -3, 2];
+
+  pols.forEach((url, i) => {
+    const rot = rotations[i % rotations.length];
+    const cap = captions[i % captions.length];
     polGrid.innerHTML += `
-      <div class="polaroid-item">
+      <div class="vintage-polaroid" style="transform: rotate(${rot}deg);">
+        <div class="tape-strip"></div>
         <img src="${url}" onerror="this.src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'"/>
-        <span style="font-size:0.75rem;font-weight:bold;margin-top:4px;display:block;">Sweet Memory ❤️</span>
+        <span class="polaroid-caption">${cap}</span>
       </div>`;
   });
 
@@ -391,7 +447,113 @@ function bindQuestToDOM() {
 }
 
 /* ============================================================
-   LEVEL 2: MAZE GAME (WITH AVATAR TOKEN)
+   LEVEL 5: MORSE CODE 50% MATCH & 3 ATTEMPTS VERIFIER
+   ============================================================ */
+function initMorseVerification(secretWord) {
+  decodeAttempts = 3;
+  document.getElementById('attempts-left-count').innerText = decodeAttempts;
+  const input = document.getElementById('user-decoded-guess');
+  const btn = document.getElementById('btn-check-decode');
+  const errBox = document.getElementById('decode-error-msg');
+  const card = document.getElementById('decoded-card');
+  const note = document.getElementById('decode-result-note');
+
+  btn.onclick = () => {
+    const guess = input.value.trim().toUpperCase();
+    if (!guess) {
+      errBox.innerText = "Please type your decoded guess!";
+      errBox.classList.remove('hidden');
+      return;
+    }
+
+    const matchRatio = calculateSimilarity(guess, secretWord);
+
+    if (matchRatio >= 0.5 || guess === secretWord) {
+      revealSecretMessage(true, "Incredible! You cracked the cipher! 🎉");
+    } else {
+      decodeAttempts--;
+      document.getElementById('attempts-left-count').innerText = decodeAttempts;
+
+      if (decodeAttempts > 0) {
+        errBox.innerText = `Incorrect decode! ${decodeAttempts} attempt(s) remaining.`;
+        errBox.classList.remove('hidden');
+      } else {
+        revealSecretMessage(false, "Attempts exhausted! Here is the decrypted message: 🔓");
+      }
+    }
+  };
+
+  function revealSecretMessage(isSuccess, noteText) {
+    errBox.classList.add('hidden');
+    input.disabled = true;
+    btn.disabled = true;
+    note.innerText = noteText;
+    card.classList.remove('hidden');
+    if (isSuccess) confetti({ particleCount: 90, spread: 60 });
+  }
+}
+
+function calculateSimilarity(str1, str2) {
+  if (str1 === str2) return 1.0;
+  if (str1.length < 2 || str2.length < 2) return str1 === str2 ? 1 : 0;
+
+  const getBigrams = s => {
+    const bigrams = new Set();
+    for (let i = 0; i < s.length - 1; i++) bigrams.add(s.substring(i, i + 2));
+    return bigrams;
+  };
+
+  const b1 = getBigrams(str1);
+  const b2 = getBigrams(str2);
+  let intersection = 0;
+  b1.forEach(bg => { if (b2.has(bg)) intersection++; });
+
+  return (2.0 * intersection) / (b1.size + b2.size);
+}
+
+/* ============================================================
+   FEEDBACK: SUPABASE + EMAILJS DIRECT DISPATCH
+   ============================================================ */
+document.getElementById('btn-send-feedback').addEventListener('click', async () => {
+  const fText = document.getElementById('feedback-text').value;
+  const btn = document.getElementById('btn-send-feedback');
+  if (!fText.trim()) return;
+
+  btn.disabled = true;
+  btn.innerText = 'Dispatching Reply... ⏳';
+
+  // 1. Save to Supabase table
+  const { error } = await supabaseClient.from('quest_feedbacks').insert([{
+    quest_id: questData.id,
+    feedback_text: fText
+  }]);
+
+  // 2. EmailJS Notification to Creator
+  if (window.emailjs && EMAILJS_PUBLIC_KEY !== "YOUR_EMAILJS_PUBLIC_KEY") {
+    try {
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email: questData.sender_email,
+        sender_name: questData.sender_name,
+        star_name: questData.star_name,
+        feedback_text: fText
+      });
+    } catch (e) {
+      console.warn("EmailJS notification error:", e);
+    }
+  }
+
+  if (!error) {
+    document.getElementById('feedback-status').classList.remove('hidden');
+    btn.innerText = 'Dispatched With Love! ❤️';
+  } else {
+    btn.disabled = false;
+    btn.innerText = 'Retry Sending 🚀';
+    alert('Could not save feedback: ' + error.message);
+  }
+});
+
+/* ============================================================
+   LEVEL 2: MAZE GAME
    ============================================================ */
 const mazeCanvas = document.getElementById('maze-canvas');
 const mazeCtx = mazeCanvas ? mazeCanvas.getContext('2d') : null;
@@ -430,7 +592,7 @@ function drawMaze() {
   for (let r = 0; r < 10; r++) {
     for (let c = 0; c < 10; c++) {
       if (mazeGrid[r][c] === 1) {
-        mazeCtx.fillStyle = '#1e293b';
+        mazeCtx.fillStyle = '#eeddc9';
         mazeCtx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
       } else if (mazeGrid[r][c] === 2) {
         mazeCtx.font = '18px sans-serif';
@@ -440,7 +602,6 @@ function drawMaze() {
     }
   }
 
-  // Draw Avatar circle
   const px = playerPos.x * cellSize + 15;
   const py = playerPos.y * cellSize + 15;
   mazeCtx.save();
@@ -450,7 +611,7 @@ function drawMaze() {
   if (runnerImg.complete && runnerImg.naturalWidth > 0) {
     mazeCtx.drawImage(runnerImg, px - 11, py - 11, 22, 22);
   } else {
-    mazeCtx.fillStyle = '#ff4081';
+    mazeCtx.fillStyle = '#c2884a';
     mazeCtx.fill();
   }
   mazeCtx.restore();
@@ -564,15 +725,15 @@ document.getElementById('retry-timer-btn').addEventListener('click', () => {
 });
 
 /* ============================================================
-   LEVEL 4: CONTROLLED RUNAWAY NO BUTTON
+   LEVEL 4: RUNAWAY NO BUTTON
    ============================================================ */
 const noBtn = document.getElementById('no-btn');
 const yesBtn = document.getElementById('yes-btn');
 const trapArena = document.getElementById('trap-arena');
 
 function runawayNo() {
-  const w = trapArena.clientWidth - 100;
-  const h = trapArena.clientHeight - 55;
+  const w = trapArena.clientWidth - 95;
+  const h = trapArena.clientHeight - 50;
   const rx = Math.max(10, Math.floor(Math.random() * w));
   const ry = Math.max(10, Math.floor(Math.random() * h));
   noBtn.style.left = `${rx}px`;
@@ -590,15 +751,7 @@ yesBtn.addEventListener('click', () => {
 });
 
 /* ============================================================
-   LEVEL 5: MORSE CODE DECODE TRIGGER
-   ============================================================ */
-document.getElementById('decode-btn').addEventListener('click', () => {
-  document.getElementById('decoded-card').classList.remove('hidden');
-  confetti({ particleCount: 80, spread: 60 });
-});
-
-/* ============================================================
-   LEVEL 6: CANDLE & FEEDBACK
+   LEVEL 6: CANDLE
    ============================================================ */
 const candle = document.getElementById('candle');
 candle.addEventListener('click', () => {
@@ -611,29 +764,11 @@ candle.addEventListener('click', () => {
   }
 });
 
-document.getElementById('btn-send-feedback').addEventListener('click', async () => {
-  const fText = document.getElementById('feedback-text').value;
-  if (!fText.trim()) return;
-
-  const { error } = await supabaseClient.from('quest_feedbacks').insert([{
-    quest_id: questData.id,
-    feedback_text: fText
-  }]);
-
-  if (!error) {
-    document.getElementById('feedback-status').classList.remove('hidden');
-    document.getElementById('btn-send-feedback').disabled = true;
-  }
-});
-
 function celebrateAgain() {
   confetti({ particleCount: 150, spread: 80 });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* ============================================================
-   GLOBAL NAVIGATION
-   ============================================================ */
 function goToLevel(target) {
   const cur = document.getElementById(`level-${currentLevel}`);
   const nxt = document.getElementById(`level-${target}`);
@@ -654,7 +789,7 @@ document.getElementById('start-quest-btn').addEventListener('click', () => {
     bgm.play().then(() => {
       vinylBtn.classList.remove('paused');
       isAudioPlaying = true;
-    }).catch(e => console.log("Audio play blocked by browser:", e));
+    }).catch(e => console.log("Soundtrack blocked:", e));
   }
   goToLevel(1);
 });
@@ -691,12 +826,12 @@ function initAmbientDust() {
   let pts = Array.from({ length: 30 }, () => ({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
-    r: Math.random() * 2 + 0.5,
-    sy: -Math.random() * 0.4 - 0.2
+    r: Math.random() * 2.5 + 0.6,
+    sy: -Math.random() * 0.35 - 0.15
   }));
   function anim() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fillStyle = 'rgba(214, 178, 140, 0.35)';
     pts.forEach(p => {
       p.y += p.sy;
       if (p.y < 0) p.y = canvas.height;
