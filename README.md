@@ -44,7 +44,7 @@ The platform provides a dual-flow system:
   * `@supabase/supabase-js` (Database & Storage interaction)
 
 ---
-website:https://wish-love.vercel.app/
+
 ## 📁 Project Structure
 
 ```text
