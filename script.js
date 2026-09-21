@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * THE BIRTHDAY QUEST - FULL ENGINE WITH ENHANCED CONTROLS
+ * THE BIRTHDAY QUEST - ENGINE WITH BATCH CROPPING & ATTEMPT LOGIC
  * ============================================================
  */
 
@@ -28,9 +28,10 @@ let level6Files = [];
 
 let decodeAttempts = 3;
 
-// Puzzle State Variables
-let puzzleMaxAttempts = 3;
+// Puzzle Engine State
+let puzzleMaxAttempts = 2;
 let puzzleCurrentAttempt = 1;
+let puzzleAttemptMessages = {};
 let puzzleState = [1, 2, 0, 3, 4, 5, 6, 8, 7];
 let timerCountdown = 45;
 let puzzleTimer = null;
@@ -90,58 +91,60 @@ vinylBtn.addEventListener('click', () => {
 });
 
 /* ============================================================
-   CREATOR MODE: FORM & DUAL LINK GENERATION
+   HELPER: GUIDE TOGGLE
+   ============================================================ */
+window.toggleSectionGuide = function(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('hidden');
+};
+
+/* ============================================================
+   CREATOR MODE: FORM & ATTEMPT GENERATOR
    ============================================================ */
 function initCreatorView() {
   const presetSelector = document.getElementById('bgm-preset-selector');
   const previewBtn = document.getElementById('btn-preview-audio');
   const previewPlayer = document.getElementById('preview-player');
 
-  // Preview Preset Audio with proper Play/Pause and Reset
+  // Preview Audio Controller
   previewBtn.addEventListener('click', () => {
     const selectedUrl = presetSelector.value;
     if (!selectedUrl) {
       alert("Please select a preset track first to preview!");
       return;
     }
-
-    // If source changed or paused, start playback
     if (previewPlayer.src !== new URL(selectedUrl, window.location.href).href && previewPlayer.src !== selectedUrl) {
       previewPlayer.src = selectedUrl;
       previewPlayer.play().then(() => {
         previewBtn.innerText = "⏸️ Pause";
-      }).catch(err => console.log("Audio play error:", err));
+      }).catch(err => console.log(err));
     } else if (previewPlayer.paused) {
       previewPlayer.play().then(() => {
         previewBtn.innerText = "⏸️ Pause";
-      }).catch(err => console.log("Audio play error:", err));
+      }).catch(err => console.log(err));
     } else {
       previewPlayer.pause();
       previewBtn.innerText = "▶️ Test";
     }
   });
 
-  // When song ends, reset button
   previewPlayer.addEventListener('ended', () => {
     previewBtn.innerText = "▶️ Test";
   });
 
-  // If preset selection changes, pause any running test
   presetSelector.addEventListener('change', () => {
-    if (!previewPlayer.paused) {
-      previewPlayer.pause();
-    }
+    if (!previewPlayer.paused) previewPlayer.pause();
     previewBtn.innerText = "▶️ Test";
   });
 
-  // Expandable Guide Toggle
-  const guideToggleBtn = document.getElementById('btn-toggle-guide');
-  const guideContent = document.getElementById('creator-guide-content');
-  guideToggleBtn.addEventListener('click', () => {
-    guideContent.classList.toggle('hidden');
-    guideToggleBtn.innerText = guideContent.classList.contains('hidden') ? "📖 Read Creator Guide & Steps" : "✖️ Hide Guide";
+  // Dynamic Attempts Message Inputs Generator
+  const attemptsDropdown = document.getElementById('in-level3-attempts');
+  renderAttemptInputs(parseInt(attemptsDropdown.value, 10));
+  attemptsDropdown.addEventListener('change', (e) => {
+    renderAttemptInputs(parseInt(e.target.value, 10));
   });
 
+  // Preset Listeners
   setupPresetListener('intro-presets', 'in-intro-content', {
     en_1: "May your birthday be filled with endless smiles, pure joy, and everything you have ever dreamed of! Happy Birthday!",
     en_2: "It takes an absolute saint to handle someone as crazy as you. Gladly signing up for another year of madness! Happy Birthday!",
@@ -165,44 +168,62 @@ function initCreatorView() {
     en_2: "Happy Birthday! As another beautiful chapter begins, always remember how deeply you are appreciated and admired. Keep inspiring, keep chasing big dreams, and never lose that bright, contagious spark of yours!"
   });
 
-  // Hero Avatar Crop (1:1)
-  document.getElementById('in-hero-file').addEventListener('change', (e) => {
-    if (e.target.files[0]) {
-      openCropper(e.target.files[0], 1, (blob) => {
-        heroBlob = blob;
-        const prev = document.getElementById('crop-preview-hero');
-        prev.src = URL.createObjectURL(blob);
-        prev.classList.remove('hidden');
-      });
-    }
+  // Single File Cropper: Hero Photo
+  setupImageInputWithCrop('in-hero-file', 1, (blob) => {
+    heroBlob = blob;
+    const prev = document.getElementById('crop-preview-hero');
+    prev.src = URL.createObjectURL(blob);
+    prev.classList.remove('hidden');
   });
 
-  // Level 1 Slideshow Multiple Uploads
-  document.getElementById('in-level1-files').addEventListener('change', (e) => {
-    Array.from(e.target.files).forEach(f => level1Files.push(f));
+  // Single File Cropper: Puzzle Photo
+  setupImageInputWithCrop('in-level3-file', 1, (blob) => {
+    puzzleBlob = blob;
+    const prev = document.getElementById('crop-preview-puzzle');
+    prev.src = URL.createObjectURL(blob);
+    prev.classList.remove('hidden');
+  });
+
+  // Multi-File Queue Cropper: Level 1 Slideshow (Aspect Ratio 4/5)
+  setupMultipleImageCrop('in-level1-files', 4/5, (croppedBlobs) => {
+    croppedBlobs.forEach(b => level1Files.push(b));
     renderPreviewGrid(level1Files, document.getElementById('slideshow-preview-grid'));
   });
 
-  // Puzzle Crop (1:1)
-  document.getElementById('in-level3-file').addEventListener('change', (e) => {
-    if (e.target.files[0]) {
-      openCropper(e.target.files[0], 1, (blob) => {
-        puzzleBlob = blob;
-        const prev = document.getElementById('crop-preview-puzzle');
-        prev.src = URL.createObjectURL(blob);
-        prev.classList.remove('hidden');
-      });
-    }
-  });
-
-  // Polaroid Multiple Uploads
-  document.getElementById('in-level6-files').addEventListener('change', (e) => {
-    Array.from(e.target.files).forEach(f => level6Files.push(f));
+  // Multi-File Queue Cropper: Level 6 Polaroids (Aspect Ratio 1/1)
+  setupMultipleImageCrop('in-level6-files', 1, (croppedBlobs) => {
+    croppedBlobs.forEach(b => level6Files.push(b));
     renderPreviewGrid(level6Files, document.getElementById('polaroid-preview-grid'));
   });
 
   document.getElementById('btn-fill-sample').addEventListener('click', fillSampleData);
   document.getElementById('quest-form').addEventListener('submit', handleFormSubmit);
+}
+
+function renderAttemptInputs(count) {
+  const container = document.getElementById('attempt-messages-container');
+  container.innerHTML = `<label style="font-weight: 700; font-size: 0.86rem; color: #473c33; display: block; margin-bottom: 6px;">
+    💬 ഓരോ അറ്റെംപ്റ്റിലും സമയം കഴിയുമ്പോൾ കാണിക്കേണ്ട സന്ദേശങ്ങൾ:
+  </label>`;
+
+  const defaults = [
+    "അയ്യോ സമയം കഴിഞ്ഞു! ഒന്നുംകൂടി ശ്രദ്ധിച്ച് ട്രൈ ചെയ്യൂ! ⚡",
+    "ഇതത്ര എളുപ്പമല്ല അല്ലേ! അടുത്ത അറ്റെംപ്റ്റിൽ റെഡിയാക്കാം! 😉",
+    "പോരാ പോരാ വേഗത കുറച്ചുകൂടി കൂട്ടണം! 🚀",
+    "വിട്ടുകൊടുക്കരുത്, ഒരു ചാൻസ് കൂടിയുണ്ട്! 💪",
+    "അവസാന ചാൻസ് ആണ്, കട്ടക്ക് പിടിച്ചോ! 🔥"
+  ];
+
+  for (let i = 1; i <= count; i++) {
+    const div = document.createElement('div');
+    div.className = 'field';
+    div.style.marginBottom = '8px';
+    div.innerHTML = `
+      <small style="color: var(--accent-gold); font-weight: bold;">Attempt ${i} Fail Message:</small>
+      <input type="text" id="in-attempt-msg-${i}" class="creamy-input mt-1" value="${defaults[i - 1] || 'Time is up! Try again!'}" />
+    `;
+    container.appendChild(div);
+  }
 }
 
 function setupPresetListener(selectId, targetId, dict) {
@@ -235,10 +256,10 @@ function fillSampleData() {
   document.getElementById('in-level1-note').value = "Every picture tells a story of unforgettable laughs, shared moments, and our timeless bond! 📸";
   document.getElementById('in-level2-intro').value = "Guide your token to the birthday cake! But remember, eating the whole slice alone is strictly forbidden! 🍰";
   document.getElementById('in-level3-desc').value = "Rearrange your photo within 45 seconds to unlock the secret chamber! ⏱️";
-  if (document.getElementById('in-level3-attempts')) {
-    document.getElementById('in-level3-attempts').value = "3";
-  }
+  document.getElementById('in-level3-attempts').value = "2";
+  renderAttemptInputs(2);
   document.getElementById('in-level4-question').value = "Do you admit that I am the single coolest and most caring friend you have? 😜";
+  document.getElementById('in-level4-success').value = "I knew it! Truth always wins! Unlocked the secret chamber for you! 😍";
   document.getElementById('in-level5-word').value = "BEST FRIEND";
   document.getElementById('in-level6-letter').value = "In a world of fleeting connections, your presence is a rare and comforting blessing. Thank you for standing by me through thick and thin, for lighting up the darkest days, and for being your wonderfully authentic self. May this year bring you boundless success, health, and limitless joy! ❤️";
 
@@ -257,9 +278,72 @@ function fillSampleData() {
 }
 
 /* ============================================================
-   CROPPER LOGIC
+   STRICT IMAGE VALIDATION & BATCH CROPPER QUEUE
    ============================================================ */
-function openCropper(file, aspectRatio, callback) {
+function setupImageInputWithCrop(inputId, aspectRatio, onCroppedCallback) {
+  const input = document.getElementById(inputId);
+  input.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert("⚠️ വീഡിയോയോ മറ്റ് ഫയലുകളോ അനുവദനീയമല്ല! ദയവായി ഒരു ഫോട്ടോ മാത്രം തിരഞ്ഞെടുക്കുക.");
+      input.value = "";
+      return;
+    }
+    openCropperModal(file, aspectRatio, onCroppedCallback);
+  });
+}
+
+function setupMultipleImageCrop(inputId, aspectRatio, onAllDoneCallback) {
+  const input = document.getElementById(inputId);
+  input.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    // Filter out videos
+    const validImages = files.filter(f => {
+      if (!f.type.startsWith('image/')) {
+        alert(`⚠️ ${f.name} ഒരു വീഡിയോ/അസാധുവായ ഫയൽ ആയതിനാൽ ഒഴിവാക്കി. ഫോട്ടോകൾ മാത്രം നൽകുക.`);
+        return false;
+      }
+      return true;
+    });
+
+    if (!validImages.length) {
+      input.value = "";
+      return;
+    }
+
+    // Process in sequential queue
+    const croppedResults = [];
+    let currentIndex = 0;
+
+    function processNext() {
+      if (currentIndex >= validImages.length) {
+        input.value = "";
+        onAllDoneCallback(croppedResults);
+        return;
+      }
+      const currentFile = validImages[currentIndex];
+      document.getElementById('crop-modal-title').innerText = `Crop Photo (${currentIndex + 1} of ${validImages.length}): ${currentFile.name}`;
+      
+      openCropperModal(currentFile, aspectRatio, (blob) => {
+        croppedResults.push(blob);
+        currentIndex++;
+        processNext();
+      }, () => {
+        // On cancel/skip, advance to next
+        currentIndex++;
+        processNext();
+      });
+    }
+
+    processNext();
+  });
+}
+
+function openCropperModal(file, aspectRatio, onSave, onCancel) {
   const modal = document.getElementById('crop-modal');
   const cropImg = document.getElementById('cropping-image');
   const reader = new FileReader();
@@ -274,28 +358,28 @@ function openCropper(file, aspectRatio, callback) {
       viewMode: 1,
       autoCropArea: 0.9,
     });
-    activeCropCallback = callback;
+
+    // Save Click
+    document.getElementById('btn-apply-crop').onclick = () => {
+      cropperInstance.getCroppedCanvas({ maxWidth: 900, maxHeight: 900 }).toBlob((blob) => {
+        modal.classList.add('hidden');
+        cropperInstance.destroy();
+        if (onSave) onSave(blob);
+      }, 'image/jpeg', 0.85);
+    };
+
+    // Cancel Click
+    document.getElementById('btn-cancel-crop').onclick = () => {
+      modal.classList.add('hidden');
+      if (cropperInstance) cropperInstance.destroy();
+      if (onCancel) onCancel();
+    };
   };
   reader.readAsDataURL(file);
 }
 
-document.getElementById('btn-apply-crop').addEventListener('click', () => {
-  if (cropperInstance && activeCropCallback) {
-    cropperInstance.getCroppedCanvas({ maxWidth: 800, maxHeight: 800 }).toBlob((blob) => {
-      activeCropCallback(blob);
-      document.getElementById('crop-modal').classList.add('hidden');
-      cropperInstance.destroy();
-    }, 'image/jpeg', 0.85);
-  }
-});
-
-document.getElementById('btn-cancel-crop').addEventListener('click', () => {
-  document.getElementById('crop-modal').classList.add('hidden');
-  if (cropperInstance) cropperInstance.destroy();
-});
-
 /* ============================================================
-   SUPABASE STORAGE UPLOAD & SUBMIT (RELIABLE UPLOADER)
+   SUPABASE STORAGE UPLOAD & SUBMIT
    ============================================================ */
 async function uploadToStorage(fileOrBlob, folder = 'uploads') {
   if (!fileOrBlob) return null;
@@ -333,8 +417,6 @@ async function handleFormSubmit(e) {
     let heroUrl = null;
     if (heroBlob) {
       heroUrl = await uploadToStorage(heroBlob, 'avatars');
-    } else if (document.getElementById('in-hero-file').files[0]) {
-      heroUrl = await uploadToStorage(document.getElementById('in-hero-file').files[0], 'avatars');
     } else if (typeof level1Files[0] === 'string') {
       heroUrl = level1Files[0];
     }
@@ -342,13 +424,11 @@ async function handleFormSubmit(e) {
     let puzzleUrl = null;
     if (puzzleBlob) {
       puzzleUrl = await uploadToStorage(puzzleBlob, 'puzzles');
-    } else if (document.getElementById('in-level3-file').files[0]) {
-      puzzleUrl = await uploadToStorage(document.getElementById('in-level3-file').files[0], 'puzzles');
     } else if (typeof level1Files[1] === 'string') {
       puzzleUrl = level1Files[1];
     }
 
-    // AUDIO PRIORITY: Uploaded file takes highest priority over preset track
+    // Soundtrack Priority: Upload takes precedence over preset
     const uploadedBgm = document.getElementById('in-bgm-file').files[0];
     let finalBgmUrl = null;
     if (uploadedBgm) {
@@ -370,8 +450,14 @@ async function handleFormSubmit(e) {
     }
 
     const secretToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
-    const attemptsInput = document.getElementById('in-level3-attempts');
-    const selectedAttempts = attemptsInput ? parseInt(attemptsInput.value, 10) : 3;
+    const selectedAttempts = parseInt(document.getElementById('in-level3-attempts').value, 10) || 2;
+
+    // Collect custom attempt failure messages
+    const attemptMessages = {};
+    for (let i = 1; i <= selectedAttempts; i++) {
+      const msgInput = document.getElementById(`in-attempt-msg-${i}`);
+      attemptMessages[`attempt_${i}`] = msgInput ? msgInput.value : `Time's up for attempt ${i}!`;
+    }
 
     const payload = {
       star_name: document.getElementById('in-star-name').value,
@@ -386,7 +472,9 @@ async function handleFormSubmit(e) {
       level3_image: puzzleUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500',
       level3_desc: document.getElementById('in-level3-desc').value,
       level3_attempts: selectedAttempts,
+      level3_attempt_messages: attemptMessages,
       level4_question: document.getElementById('in-level4-question').value,
+      level4_success_text: document.getElementById('in-level4-success').value || "I knew it! Truth always wins! 😍",
       level5_secret_word: (document.getElementById('in-level5-word').value || 'SWEET HEART').toUpperCase(),
       level6_letter: document.getElementById('in-level6-letter').value,
       level6_polaroids: l6Urls.length ? l6Urls : ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'],
@@ -491,7 +579,7 @@ function bindQuestToDOM() {
   document.getElementById('feedback-receiver-name').innerText = questData.sender_name;
   document.getElementById('display-intro-content').innerText = questData.intro_content || '';
 
-  // Personalized Dearest Friend Greeting Fix
+  // Dearest Star Name fix
   const letterStarGreeting = document.getElementById('letter-star-name');
   if (letterStarGreeting) {
     letterStarGreeting.innerText = questData.star_name || "Friend";
@@ -522,13 +610,17 @@ function bindQuestToDOM() {
   document.getElementById('display-level2-intro').innerText = questData.level2_intro || '';
   document.getElementById('display-level2-success').innerText = questData.level2_success || '';
 
-  // Level 3 Puzzle Configuration
+  // Level 3 Puzzle Data
   document.getElementById('display-level3-desc').innerText = questData.level3_desc || '';
-  puzzleMaxAttempts = questData.level3_attempts || 3;
+  puzzleMaxAttempts = questData.level3_attempts || 2;
+  puzzleAttemptMessages = questData.level3_attempt_messages || {};
   puzzleCurrentAttempt = 1;
 
-  // Level 4
+  // Level 4 Truth Trap Custom Success
   document.getElementById('display-level4-question').innerText = questData.level4_question || '';
+  if (questData.level4_success_text) {
+    document.getElementById('display-trap-desc').innerText = questData.level4_success_text;
+  }
 
   // Level 5 Morse Code
   const word = (questData.level5_secret_word || 'BEST FRIEND').toUpperCase();
@@ -563,7 +655,6 @@ function bindQuestToDOM() {
       </div>`;
   });
 
-  // Setup Feedback Quick Preset Chips
   document.querySelectorAll('.fb-chip').forEach(chip => {
     chip.onclick = () => {
       document.getElementById('feedback-text').value = chip.innerText;
@@ -667,7 +758,7 @@ function moveMazePlayer(dx, dy) {
 });
 
 /* ============================================================
-   LEVEL 3: PHOTO PUZZLE & MULTI-ATTEMPT ENGINE
+   LEVEL 3: PHOTO PUZZLE & ATTEMPTS HANDLER
    ============================================================ */
 function initPuzzleGame() {
   puzzleState = [1, 2, 0, 3, 4, 5, 6, 8, 7];
@@ -707,14 +798,14 @@ function startPuzzleCountdown() {
 
 function handlePuzzleTimeout() {
   if (puzzleCurrentAttempt < puzzleMaxAttempts) {
-    // There are remaining attempts
     const attemptModal = document.getElementById('attempt-failed-modal');
     const desc = document.getElementById('attempt-failed-text');
-    const remaining = puzzleMaxAttempts - puzzleCurrentAttempt;
     
-    if (desc) {
-      desc.innerText = `Time's up for Attempt ${puzzleCurrentAttempt}! You have ${remaining} chance(s) left.`;
-    }
+    // Pick custom failure message if configured by creator
+    const customMsg = puzzleAttemptMessages[`attempt_${puzzleCurrentAttempt}`] 
+      || `Time's up for Attempt ${puzzleCurrentAttempt}! You have ${puzzleMaxAttempts - puzzleCurrentAttempt} attempt(s) remaining!`;
+
+    if (desc) desc.innerText = customMsg;
     if (attemptModal) attemptModal.classList.remove('hidden');
 
     const nextBtn = document.getElementById('btn-next-attempt');
@@ -726,7 +817,11 @@ function handlePuzzleTimeout() {
       };
     }
   } else {
-    // All attempts exhausted! Reveal auto-solve / extra time troll modal
+    // All attempts exhausted
+    const lastMsg = puzzleAttemptMessages[`attempt_${puzzleCurrentAttempt}`];
+    if (lastMsg) {
+      document.getElementById('all-attempts-exhausted-note').innerText = lastMsg;
+    }
     document.getElementById('troll-modal').classList.remove('hidden');
   }
 }
