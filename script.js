@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * THE SURPRISE QUEST - ENGINE (VERIFIED & FULLY INTEGRATED)
+ * THE SURPRISE QUEST - ENGINE (VERIFIED, MULTI-ROLE & ENGLISH)
  * ============================================================
  */
 
@@ -51,11 +51,13 @@ const MORSE_MAP = {
 // Occasion Configuration Data
 const OCCASION_CONFIG = {
   birthday: {
-    roles: [{ val: 'birthday_star', label: 'Birthday Star 🎂' }],
+    roles: [
+      { val: 'birthday_star', label: 'Birthday Star 🎂' }
+    ],
     mazeGoal: '🎂',
-    mainHeading: (name) => `Happy Birthday ${name}! 🎉`,
+    mainHeading: (name, role) => `Happy Birthday ${name}! 🎉`,
     finaleHeading: 'Happy Birthday! 🎂',
-    greeting: (name) => `Dearest ${name},`
+    greeting: (name, role) => `Dearest ${name},`
   },
   friendship: {
     roles: [
@@ -64,20 +66,20 @@ const OCCASION_CONFIG = {
       { val: 'soulmate', label: 'Soulmate Friend ✨' }
     ],
     mazeGoal: '🏆',
-    mainHeading: (name) => `For My Bestie ${name}! 💫`,
+    mainHeading: (name, role) => `For My ${role || 'Bestie'} ${name}! 💫`,
     finaleHeading: 'Cheers to Our Friendship! 🥂',
-    greeting: (name) => `Dearest Bestie ${name},`
+    greeting: (name, role) => `Dearest ${role ? role + ' ' : ''}${name},`
   },
   wedding: {
     roles: [
-      { val: 'groom', label: 'Groom (വരൻ) 🤵' },
-      { val: 'bride', label: 'Bride (വധു) 👰' },
-      { val: 'couple', label: 'Newly Wed Couple 💍' }
+      { val: 'groom', label: 'Groom 🤵' },
+      { val: 'bride', label: 'Bride 👰' },
+      { val: 'couple', label: 'Newlywed Couple 💍' }
     ],
     mazeGoal: '💍',
-    mainHeading: (name) => `Happy Wedding Bells, ${name}! 💍`,
+    mainHeading: (name, role) => `Happy Wedding Bells, ${name}! 💍`,
     finaleHeading: 'Happy Married Life! 🎊',
-    greeting: (name) => `Dearest ${name},`
+    greeting: (name, role) => `Dearest ${name},`
   },
   love: {
     roles: [
@@ -88,9 +90,9 @@ const OCCASION_CONFIG = {
       { val: 'lover', label: 'My Love 🥰' }
     ],
     mazeGoal: '❤️',
-    mainHeading: (name) => `To My Love, ${name}! ❤️`,
+    mainHeading: (name, role) => `To My ${role || 'Love'}, ${name}! ❤️`,
     finaleHeading: 'Forever & Always Yours! 🥰',
-    greeting: (name) => `My Dearest ${name},`
+    greeting: (name, role) => `My Dearest ${role || 'Love'} ${name},`
   },
   siblings: {
     roles: [
@@ -99,9 +101,9 @@ const OCCASION_CONFIG = {
       { val: 'sibling', label: 'Best Sibling 🌟' }
     ],
     mazeGoal: '🎁',
-    mainHeading: (name) => `Special Surprise for ${name}! 🎁`,
+    mainHeading: (name, role) => `Special Surprise for My ${role || 'Sibling'} ${name}! 🎁`,
     finaleHeading: 'Best Sibling Ever! 🌟',
-    greeting: (name) => `Dear ${name},`
+    greeting: (name, role) => `Dear ${name},`
   },
   farewell: {
     roles: [
@@ -110,9 +112,9 @@ const OCCASION_CONFIG = {
       { val: 'mentor', label: 'Mentor / Leader 🌟' }
     ],
     mazeGoal: '✈️',
-    mainHeading: (name) => `Bon Voyage & Best Wishes, ${name}! 🌍`,
+    mainHeading: (name, role) => `Bon Voyage & Best Wishes, ${name}! 🌍`,
     finaleHeading: 'We Will Miss You! 🚀',
-    greeting: (name) => `Dear ${name},`
+    greeting: (name, role) => `Dear ${name},`
   },
   congrats: {
     roles: [
@@ -120,9 +122,9 @@ const OCCASION_CONFIG = {
       { val: 'graduate', label: 'Graduate 🎓' }
     ],
     mazeGoal: '🏆',
-    mainHeading: (name) => `Congratulations, ${name}! 🏆`,
+    mainHeading: (name, role) => `Congratulations, ${name}! 🏆`,
     finaleHeading: 'Proud of Your Success! 🌟',
-    greeting: (name) => `Dearest ${name},`
+    greeting: (name, role) => `Dearest ${name},`
   }
 };
 
@@ -198,23 +200,36 @@ function initCreatorView() {
   const occasionSelect = document.getElementById('in-occasion-type');
   const subRoleContainer = document.getElementById('sub-role-container');
   const subRoleSelect = document.getElementById('in-sub-role');
+  const customRoleInput = document.getElementById('in-custom-role');
 
   function updateSubRoles() {
     const occasion = occasionSelect.value;
     const config = OCCASION_CONFIG[occasion];
-    if (config && config.roles.length > 1) {
-      subRoleContainer.classList.remove('hidden');
-      subRoleSelect.innerHTML = '';
+    subRoleContainer.classList.remove('hidden');
+    subRoleSelect.innerHTML = '';
+
+    if (config && config.roles) {
       config.roles.forEach(r => {
-        subRoleSelect.innerHTML += `<option value="${r.val}">${r.label}</option>`;
+        subRoleSelect.innerHTML += `<option value="${r.label}">${r.label}</option>`;
       });
+    }
+    // Always add custom typing option
+    subRoleSelect.innerHTML += `<option value="custom">✏️ Custom Role (Type Your Own)</option>`;
+    handleCustomRoleVisibility();
+  }
+
+  function handleCustomRoleVisibility() {
+    if (subRoleSelect.value === 'custom') {
+      customRoleInput.classList.remove('hidden');
+      customRoleInput.focus();
     } else {
-      subRoleContainer.classList.add('hidden');
-      subRoleSelect.innerHTML = `<option value="default">${config ? config.roles[0].label : 'General'}</option>`;
+      customRoleInput.classList.add('hidden');
+      customRoleInput.value = '';
     }
   }
 
   occasionSelect.addEventListener('change', updateSubRoles);
+  subRoleSelect.addEventListener('change', handleCustomRoleVisibility);
   updateSubRoles();
 
   // Preset Listeners
@@ -323,15 +338,15 @@ function setupPresetListener(selectId, targetId, dict) {
 function renderAttemptInputs(count) {
   const container = document.getElementById('attempt-messages-container');
   container.innerHTML = `<label style="font-weight: 700; font-size: 0.86rem; color: #473c33; display: block; margin-bottom: 6px;">
-    💬 ഓരോ അറ്റെംപ്റ്റിലും സമയം കഴിയുമ്പോൾ കാണിക്കേണ്ട സന്ദേശങ്ങൾ:
+    💬 Timeout Teaser / Failure Messages For Each Attempt:
   </label>`;
 
   const defaults = [
-    "അയ്യോ സമയം കഴിഞ്ഞു! ഒന്നുംകൂടി ശ്രദ്ധിച്ച് ട്രൈ ചെയ്യൂ! ⚡",
-    "ഇതത്ര എളുപ്പമല്ല അല്ലേ! അടുത്ത അറ്റെംപ്റ്റിൽ റെഡിയാക്കാം! 😉",
-    "പോരാ പോരാ വേഗത കുറച്ചുകൂടി കൂട്ടണം! 🚀",
-    "വിട്ടുകൊടുക്കരുത്, ഒരു ചാൻസ് കൂടിയുണ്ട്! 💪",
-    "അവസാന ചാൻസ് ആണ്, കട്ടക്ക് പിടിച്ചോ! 🔥"
+    "Time is up! Focus and give it another shot! ⚡",
+    "Not as easy as it looks, right? You will get it this time! 😉",
+    "Pick up the pace! The clock is ticking! 🚀",
+    "Do not give up now, you are almost there! 💪",
+    "Final attempt remaining! Give it everything! 🔥"
   ];
 
   for (let i = 1; i <= count; i++) {
@@ -546,12 +561,23 @@ async function handleFormSubmit(e) {
     const attemptMessages = {};
     for (let i = 1; i <= selectedAttempts; i++) {
       const msgInput = document.getElementById(`in-attempt-msg-${i}`);
-      attemptMessages[`attempt_${i}`] = msgInput ? msgInput.value : `Time's up for attempt ${i}!`;
+      attemptMessages[`attempt_${i}`] = msgInput ? msgInput.value : `Time is up for attempt ${i}!`;
+    }
+
+    // Role extraction: preset or custom typed
+    const subRoleSelect = document.getElementById('in-sub-role');
+    const customRoleInput = document.getElementById('in-custom-role');
+    let resolvedRole = subRoleSelect.value;
+    if (resolvedRole === 'custom') {
+      resolvedRole = customRoleInput.value.trim() || 'Special One';
+    } else {
+      // Strip out emojis if any for clean text
+      resolvedRole = resolvedRole.replace(/[\u{1F600}-\u{1F6FF}]/gu, '').trim();
     }
 
     const payload = {
       occasion_type: document.getElementById('in-occasion-type').value,
-      sub_role: document.getElementById('in-sub-role').value,
+      sub_role: resolvedRole,
       star_name: document.getElementById('in-star-name').value,
       sender_name: document.getElementById('in-sender-name').value,
       hero_image: heroUrl,
@@ -664,18 +690,19 @@ async function loadQuestData(id) {
 function bindQuestToDOM() {
   const occasion = questData.occasion_type || 'birthday';
   const config = OCCASION_CONFIG[occasion] || OCCASION_CONFIG.birthday;
+  const role = questData.sub_role || '';
 
   document.getElementById('play-quest-header-title').innerText = occasion.toUpperCase() + " QUEST";
   document.getElementById('display-star-name').innerText = questData.star_name;
-  document.getElementById('display-main-heading').innerText = config.mainHeading(questData.star_name);
+  document.getElementById('display-main-heading').innerText = config.mainHeading(questData.star_name, role);
   document.getElementById('finale-main-heading').innerText = config.finaleHeading;
   document.getElementById('display-sender-name').innerText = questData.sender_name;
   document.getElementById('feedback-receiver-name').innerText = questData.sender_name;
   document.getElementById('display-intro-content').innerText = questData.intro_content || '';
 
-  const letterStarGreeting = document.getElementById('letter-star-name');
-  if (letterStarGreeting) {
-    letterStarGreeting.innerText = questData.star_name || "Friend";
+  const letterGreetingTitle = document.getElementById('letter-greeting-title');
+  if (letterGreetingTitle) {
+    letterGreetingTitle.innerHTML = config.greeting(questData.star_name, role);
   }
 
   const heroImg = document.getElementById('display-hero-img');
