@@ -45,13 +45,13 @@
         
         <div id="creator-guide-content" class="guide-details hidden">
           <ol class="guide-steps-list">
-            <li><strong>Occasion & Details:</strong> Select event type, role, names, and crop the recipient's portrait photo.</li>
+            <li><strong>Occasion & Details:</strong> Select event type, role, names, and portrait photo/video.</li>
             <li><strong>Soundtrack:</strong> Pick an ambient preset track (with preview) or upload your own custom MP3.</li>
-            <li><strong>Level 1 Memories:</strong> Upload candid photos (all images are auto-cropped for optimal viewing).</li>
-            <li><strong>Level 2 Target Maze:</strong> Customize the maze challenge prompt before they reach the surprise.</li>
+            <li><strong>Level 1 Memories:</strong> Upload personal photos (auto-cropped) or video clips.</li>
+            <li><strong>Level 2 Target Maze:</strong> Customize the maze challenge prompt before they reach the surprise target.</li>
             <li><strong>Level 3 Photo Puzzle:</strong> Crop a portrait image into a 3x3 sliding puzzle, set attempts, and teaser failure messages.</li>
-            <li><strong>Level 4 & 5:</strong> Configure the truth trap question, custom success note, and secret Morse phrase.</li>
-            <li><strong>Level 6 Finale:</strong> Write your heart-touching note and curate the grand polaroid photo wall!</li>
+            <li><strong>Level 4 & 5:</strong> Configure the truth trap question, custom success response, and secret Morse phrase.</li>
+            <li><strong>Level 6 Finale:</strong> Write your heart-touching note and curate the grand memory wall!</li>
             <li><strong>Receive Feedback:</strong> Copy your private dashboard link to secretly view their replies anytime!</li>
           </ol>
         </div>
@@ -62,7 +62,7 @@
         <div class="section-divider">0. Occasion & Core Details</div>
         <div class="level-help-toggle" onclick="toggleSectionGuide('guide-0')">💡 ഈ ലെവലിനെ കുറിച്ച് അറിയാൻ (Level Info & Guide)</div>
         <div id="guide-0" class="level-guide-box hidden">
-          ഏത് ആഘോഷത്തിനാണ് ഈ ക്വസ്റ്റ് തയ്യാറാക്കുന്നത് എന്ന് തിരഞ്ഞെടുക്കുക (Birthday, Friendship, Wedding, Love, Siblings മുതലായവ). അതിനുശേഷം ആ വ്യക്തിയുമായുള്ള ബന്ധം, പേരുകൾ, അവരുടെ പോർട്രെയ്റ്റ് ഫോട്ടോ എന്നിവ നൽകുക.
+          ഏത് ആഘോഷത്തിനാണ് ഈ ക്വസ്റ്റ് തയ്യാറാക്കുന്നത് എന്ന് തിരഞ്ഞെടുക്കുക (Birthday, Friendship, Wedding, Love, Siblings മുതലായവ). അതിനുശേഷം ആ വ്യക്തിയുമായുള്ള ബന്ധം, പേരുകൾ, അവരുടെ പോർട്രെയ്റ്റ് ഫോട്ടോ അല്ലെങ്കിൽ വീഡിയോ നൽകുക.
         </div>
 
         <div class="field">
@@ -96,8 +96,8 @@
         </div>
 
         <div class="field">
-          <label>Recipient's Portrait (Hero Photo) 📸</label>
-          <input type="file" id="in-hero-file" accept="image/*" class="creamy-input" />
+          <label>Recipient's Portrait (Photo / Video) 📸🎥</label>
+          <input type="file" id="in-hero-file" accept="image/*,video/*" class="creamy-input" />
           <div class="crop-preview-wrap"><img id="crop-preview-hero" class="img-preview hidden"/></div>
         </div>
 
@@ -118,7 +118,7 @@
           <div class="divider-text">OR</div>
           <input type="file" id="in-bgm-file" accept="audio/*" class="creamy-input" />
           <small class="dim-hint" style="color: #9a6527; font-weight: 600; line-height: 1.4; margin-top: 6px;">
-            💡 <strong>ശ്രദ്ധിക്കുക:</strong> മുകളിലെ ലിസ്റ്റിൽ നിന്ന് പാട്ടുകൾ കേട്ടുനോക്കി തിരഞ്ഞെടുക്കാം അല്ലെങ്കിൽ സ്വന്തം ഫയൽ അപ്‌ലോഡ് ചെയ്യാം. രണ്ടും നൽകിയിട്ടുണ്ടെങ്കിൽ അപ്‌ലോഡ് ചെയ്യുന്ന ഫയലിനായിരിക്കും (Uploaded Audio) ആദ്യ മുൻഗണന!
+            💡 <strong>ശ്രദ്ധിക്കുക:</strong> ഓഡിയോ അപ്‌ലോഡ് ചെയ്യുകയാണെങ്കിൽ പ്രീസെറ്റിനേക്കാൾ അതിനായിരിക്കും മുൻഗണന!
           </small>
         </div>
 
@@ -138,11 +138,11 @@
         <div class="section-divider">1. Memory Slideshow</div>
         <div class="level-help-toggle" onclick="toggleSectionGuide('guide-1')">💡 ഈ ലെവലിനെ കുറിച്ച് അറിയാൻ (Level Info & Guide)</div>
         <div id="guide-1" class="level-guide-box hidden">
-          നിങ്ങളുടെ പ്രിയപ്പെട്ട ഓർമ്മച്ചിത്രങ്ങൾ ഇവിടെ അപ്‌ലോഡ് ചെയ്യാം. എത്ര ഫോട്ടോകൾ വേണമെങ്കിലും സെലക്ട് ചെയ്യാം (വീഡിയോകൾ അനുവദനീയമല്ല). തിരഞ്ഞെടുക്കുന്ന ഓരോ ഫോട്ടോയും കൃത്യമായി ക്രോപ്പ് ചെയ്ത ശേഷമേ ആഡ് ആകൂ.
+          നിങ്ങളുടെ പ്രിയപ്പെട്ട ഓർമ്മച്ചിത്രങ്ങളോ ചെറിയ വീഡിയോ ക്ലിപ്പുകളോ ഇവിടെ അപ്‌ലോഡ് ചെയ്യാം. ഫോട്ടോകളാണെങ്കിൽ ആവശ്യാനുസരണം ക്രോപ്പ് ചെയ്യാം.
         </div>
         <div class="field">
-          <label>Select Memory Photos 🖼️ (ക്രോപ്പ് ചെയ്ത് ആഡ് ചെയ്യുക)</label>
-          <input type="file" id="in-level1-files" multiple accept="image/*" class="creamy-input" />
+          <label>Select Memory Media 🖼️🎥 (Photos / Videos)</label>
+          <input type="file" id="in-level1-files" multiple accept="image/*,video/*" class="creamy-input" />
           <div id="slideshow-preview-grid" class="preview-grid"></div>
         </div>
         <div class="field">
@@ -160,7 +160,7 @@
         <div class="section-divider">2. Target Mini-Maze</div>
         <div class="level-help-toggle" onclick="toggleSectionGuide('guide-2')">💡 ഈ ലെവലിനെ കുറിച്ച് അറിയാൻ (Level Info & Guide)</div>
         <div id="guide-2" class="level-guide-box hidden">
-          കളിക്കുന്നയാൾ അവരുടെ അവതാർ ടോക്കൺ മൂവ് ചെയ്ത് മേസ് കടന്ന് ടാർഗെറ്റിലേക്ക് എത്തണം. ബർത്ത്‌ഡേയ്ക്ക് കേക്കും, ഫ്രണ്ട്ഷിപ്പിന് ട്രോഫിയും, വെഡ്ഡിംഗിന് മോതിരവും, പ്രണയത്തിന് ഹൃദയവും തനിയെ ലക്ഷ്യമായി സെറ്റ് ആകും!
+          കളിക്കുന്നയാൾ അവതാർ ടോക്കൺ മൂവ് ചെയ്ത് മേസ് കടന്ന് ടാർഗെറ്റിലേക്ക് എത്തണം. ബർത്ത്‌ഡേയ്ക്ക് കേക്കും, ഫ്രണ്ട്ഷിപ്പിന് ട്രോഫിയും, വെഡ്ഡിംഗിന് മോതിരവും തനിയെ ലക്ഷ്യമായി മാറും!
         </div>
         <div class="field">
           <label>Maze Message / Prompt</label>
@@ -180,7 +180,7 @@
         <div class="section-divider">3. Photo Puzzle</div>
         <div class="level-help-toggle" onclick="toggleSectionGuide('guide-3')">💡 ഈ ലെവലിനെ കുറിച്ച് അറിയാൻ (Level Info & Guide)</div>
         <div id="guide-3" class="level-guide-box hidden">
-          നിങ്ങൾ നൽകുന്ന ഒരു ഫോട്ടോ 3x3 സ്ലൈഡിംഗ് പസിൽ ആയി മാറും. ഓരോ അറ്റെംപ്റ്റിലും 45 സെക്കൻഡ് ലഭിക്കും. ക്രിയേറ്റർക്ക് 1 മുതൽ 5 വരെ അറ്റെംപ്റ്റുകൾ നൽകാം (ഡിഫോൾട്ട്: 2). ഓരോ തവണയും സമയം തീർന്നാൽ കളിയാക്കുന്നതോ പ്രോത്സാഹിപ്പിക്കുന്നതോ ആയ കസ്റ്റം മെസ്സേജുകൾ താഴെ നൽകാം.
+          നിങ്ങൾ നൽകുന്ന ഒരു ഫോട്ടോ 3x3 സ്ലൈഡിംഗ് പസിൽ ആയി മാറും. ഓരോ അറ്റെംപ്റ്റിലും 45 സെക്കൻഡ് ലഭിക്കും. ക്രിയേറ്റർക്ക് 1 മുതൽ 5 വരെ അറ്റെംപ്റ്റുകൾ നൽകാം. ഓരോ തവണയും സമയം തീർന്നാൽ കളിയാക്കുന്നതോ പ്രോത്സാഹിപ്പിക്കുന്നതോ ആയ കസ്റ്റം മെസ്സേജുകൾ താഴെ നൽകാം.
         </div>
         <div class="field">
           <label>Puzzle Photo (1:1 Ratio Crop) 🧩</label>
@@ -217,7 +217,7 @@
         </div>
         <div class="field">
           <label>When YES is Clicked (Success Response Content) 🎉</label>
-          <textarea id="in-level4-success" rows="2" class="creamy-textarea" placeholder="I knew it! Truth always wins! Unlocked the secret chamber for you! 😍">I knew it! Truth always wins! Unlocked the secret chamber for you! 😍</textarea>
+          <textarea id="in-level4-success" rows="2" class="creamy-textarea">I knew it! Truth always wins! Unlocked the secret chamber for you! 😍</textarea>
         </div>
 
         <!-- 5. Morse Code -->
@@ -236,7 +236,7 @@
         <div class="section-divider">6. Grand Finale</div>
         <div class="level-help-toggle" onclick="toggleSectionGuide('guide-6')">💡 ഈ ലെവലിനെ കുറിച്ച് അറിയാൻ (Level Info & Guide)</div>
         <div id="guide-6" class="level-guide-box hidden">
-          ക്വസ്റ്റിന്റെ അവസാന ഘട്ടം! നിങ്ങളുടെ ഹൃദയസ്പർശിയായ കത്തും (Letter), പോളറോയിഡ് മെമ്മറി വാളും, അവർക്ക് തിരികെ മെസ്സേജ് അയക്കാനുള്ള ഫീഡ്‌ബാക്ക് ബോക്സും ഇവിടെ പ്രദർശിപ്പിക്കും.
+          ക്വസ്റ്റിന്റെ അവസാന ഘട്ടം! നിങ്ങളുടെ ഹൃദയസ്പർശിയായ കത്തും (Letter), മെമ്മറി വാളും, അവർക്ക് തിരികെ മെസ്സേജ് അയക്കാനുള്ള ഫീഡ്‌ബാക്ക് ബോക്സും ഇവിടെ പ്രദർശിപ്പിക്കും.
         </div>
         <div class="field">
           <label>Heartfelt Letter / Note</label>
@@ -248,8 +248,8 @@
           <textarea id="in-level6-letter" rows="4" class="creamy-textarea mt-1" placeholder="Type final letter...">In a world of fleeting connections, your presence is a rare and comforting blessing. Thank you for standing by me through thick and thin, for lighting up the darkest days, and for being your wonderfully authentic self!</textarea>
         </div>
         <div class="field">
-          <label>Polaroid Wall Photos 📷 (ക്രോപ്പ് ചെയ്ത് ആഡ് ചെയ്യുക)</label>
-          <input type="file" id="in-level6-files" multiple accept="image/*" class="creamy-input" />
+          <label>Memory Wall Media 📷🎥 (Photos / Videos)</label>
+          <input type="file" id="in-level6-files" multiple accept="image/*,video/*" class="creamy-input" />
           <div id="polaroid-preview-grid" class="preview-grid"></div>
         </div>
 
@@ -266,7 +266,6 @@
       <h3 class="text-center">🎉 Quest Generated Successfully!</h3>
       <p class="dim-hint text-center mt-1">Here are your two exclusive links. Copy and keep them safe!</p>
       
-      <!-- Link 1: Recipient Link -->
       <div class="link-box mt-2">
         <label class="link-title">1. Link for Recipient 🎁</label>
         <p class="link-desc">Send this link to your friend/loved one:</p>
@@ -276,7 +275,6 @@
         </div>
       </div>
 
-      <!-- Link 2: Creator Private Feedback Dashboard -->
       <div class="link-box mt-2 private-box">
         <label class="link-title">2. Your Private Feedback Link 🔒</label>
         <p class="link-desc"><strong>DO NOT share this!</strong> Open anytime to check if they submitted a reply:</p>
@@ -292,7 +290,7 @@
     </div>
   </div>
 
-  <!-- Image Cropper Modal (Single & Batch Support) -->
+  <!-- Image Cropper Modal -->
   <div id="crop-modal" class="crop-modal hidden">
     <div class="crop-modal-content">
       <h4 id="crop-modal-title" style="margin-bottom: 8px; color: var(--accent-gold);">Crop Photo</h4>
@@ -497,22 +495,36 @@
         </div>
       </section>
 
-      <!-- LEVEL 6 -->
+      <!-- LEVEL 6: 3D REALISTIC CAKE & GRAND FINALE -->
       <section id="level-6" class="quest-stage">
         <div class="light-card text-center finale-card">
           <div class="stage-tag">Grand Finale • Celebration</div>
           <h1 class="champagne-title large" id="finale-main-heading">Happy Celebration! 🎉</h1>
           
-          <!-- Interactive Celebration Object -->
+          <!-- Realistic Layered Cake with Plate & Strawberries -->
           <div class="cake-container">
-            <div class="cake">
-              <div class="candle" id="candle"><div class="flame" id="flame"></div></div>
-              <div class="cake-top"></div>
-              <div class="cake-bottom"></div>
+            <div class="realistic-cake-box">
+              <div class="cake-plate"></div>
+              <div class="cake-tier tier-bottom">
+                <div class="frosting-decor"></div>
+              </div>
+              <div class="cake-tier tier-top">
+                <div class="frosting-drippings"></div>
+                <div class="strawberries">
+                  <span class="berry">🍓</span>
+                  <span class="berry">🍓</span>
+                  <span class="berry">🍓</span>
+                </div>
+              </div>
+              <div class="magical-candle" id="candle">
+                <div class="wick"></div>
+                <div class="magical-flame" id="flame"></div>
+              </div>
             </div>
           </div>
-          <p id="candle-hint" class="candle-hint">Touch to ignite the final surprise! 🕯️✨</p>
-          <div id="wish-revealed" class="wish-banner hidden">Surprise Unlocked! 🌟</div>
+          
+          <p id="candle-hint" class="candle-hint">Touch the glowing candle to ignite your wish! 🕯️✨</p>
+          <div id="wish-revealed" class="wish-banner hidden">✨ Wish Granted! Happy Celebration! 🌟</div>
 
           <!-- Personalized Greeting Letter -->
           <div class="letter-card">
