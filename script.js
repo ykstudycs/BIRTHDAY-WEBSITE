@@ -1,10 +1,10 @@
 /**
  * ============================================================
- * THE BIRTHDAY QUEST - FULL ENGINE WITH PROPER UPLOADS & AUDIO FIX
+ * THE BIRTHDAY QUEST - FULL ENGINE WITH ENHANCED CONTROLS
  * ============================================================
  */
 
-// 1. SUPABASE CREDENTIALS (നിങ്ങളുടെ കീകൾ മാറ്റാതെ നൽകുക)
+// 1. SUPABASE CREDENTIALS
 const SUPABASE_URL = "https://uedytnpsodsgwtcjhjry.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_URIryt2eGjUWVjZlg5qXtQ_viYHrUHC";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -27,6 +27,14 @@ let level1Files = [];
 let level6Files = [];
 
 let decodeAttempts = 3;
+
+// Puzzle State Variables
+let puzzleMaxAttempts = 3;
+let puzzleCurrentAttempt = 1;
+let puzzleState = [1, 2, 0, 3, 4, 5, 6, 8, 7];
+let timerCountdown = 45;
+let puzzleTimer = null;
+let puzzleSolved = false;
 
 // Morse Code Alphabet Map
 const MORSE_MAP = {
@@ -86,47 +94,44 @@ vinylBtn.addEventListener('click', () => {
    ============================================================ */
 function initCreatorView() {
   const presetSelector = document.getElementById('bgm-preset-selector');
-  const uploadInput = document.getElementById('in-bgm-file');
   const previewBtn = document.getElementById('btn-preview-audio');
   const previewPlayer = document.getElementById('preview-player');
 
-  // Preview Preset Audio
+  // Preview Preset Audio with proper Play/Pause and Reset
   previewBtn.addEventListener('click', () => {
     const selectedUrl = presetSelector.value;
     if (!selectedUrl) {
       alert("Please select a preset track first to preview!");
       return;
     }
-    if (previewPlayer.paused || previewPlayer.src !== selectedUrl) {
+
+    // If source changed or paused, start playback
+    if (previewPlayer.src !== new URL(selectedUrl, window.location.href).href && previewPlayer.src !== selectedUrl) {
       previewPlayer.src = selectedUrl;
-      previewPlayer.play();
-      previewBtn.innerText = "⏸️ Pause";
+      previewPlayer.play().then(() => {
+        previewBtn.innerText = "⏸️ Pause";
+      }).catch(err => console.log("Audio play error:", err));
+    } else if (previewPlayer.paused) {
+      previewPlayer.play().then(() => {
+        previewBtn.innerText = "⏸️ Pause";
+      }).catch(err => console.log("Audio play error:", err));
     } else {
       previewPlayer.pause();
       previewBtn.innerText = "▶️ Test";
     }
   });
 
+  // When song ends, reset button
+  previewPlayer.addEventListener('ended', () => {
+    previewBtn.innerText = "▶️ Test";
+  });
+
+  // If preset selection changes, pause any running test
   presetSelector.addEventListener('change', () => {
     if (!previewPlayer.paused) {
       previewPlayer.pause();
-      previewBtn.innerText = "▶️ Test";
     }
-    if (presetSelector.value !== "") {
-      uploadInput.disabled = true;
-      uploadInput.value = "";
-    } else {
-      uploadInput.disabled = false;
-    }
-  });
-
-  uploadInput.addEventListener('change', () => {
-    if (uploadInput.files.length > 0) {
-      presetSelector.disabled = true;
-      presetSelector.value = "";
-    } else {
-      presetSelector.disabled = false;
-    }
+    previewBtn.innerText = "▶️ Test";
   });
 
   // Expandable Guide Toggle
@@ -230,6 +235,9 @@ function fillSampleData() {
   document.getElementById('in-level1-note').value = "Every picture tells a story of unforgettable laughs, shared moments, and our timeless bond! 📸";
   document.getElementById('in-level2-intro').value = "Guide your token to the birthday cake! But remember, eating the whole slice alone is strictly forbidden! 🍰";
   document.getElementById('in-level3-desc').value = "Rearrange your photo within 45 seconds to unlock the secret chamber! ⏱️";
+  if (document.getElementById('in-level3-attempts')) {
+    document.getElementById('in-level3-attempts').value = "3";
+  }
   document.getElementById('in-level4-question').value = "Do you admit that I am the single coolest and most caring friend you have? 😜";
   document.getElementById('in-level5-word').value = "BEST FRIEND";
   document.getElementById('in-level6-letter').value = "In a world of fleeting connections, your presence is a rare and comforting blessing. Thank you for standing by me through thick and thin, for lighting up the darkest days, and for being your wonderfully authentic self. May this year bring you boundless success, health, and limitless joy! ❤️";
@@ -244,9 +252,7 @@ function fillSampleData() {
   renderPreviewGrid(level1Files, document.getElementById('slideshow-preview-grid'));
   renderPreviewGrid(level6Files, document.getElementById('polaroid-preview-grid'));
 
-  document.getElementById('bgm-preset-selector').value = "https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3";
-  document.getElementById('in-bgm-file').disabled = true;
-
+  document.getElementById('bgm-preset-selector').value = "assets/music/song1.mp3";
   alert("⚡ Sample data filled! Scroll down and click 'Generate Quest Links'.");
 }
 
@@ -342,10 +348,13 @@ async function handleFormSubmit(e) {
       puzzleUrl = level1Files[1];
     }
 
-    let finalBgmUrl = document.getElementById('bgm-preset-selector').value || null;
+    // AUDIO PRIORITY: Uploaded file takes highest priority over preset track
     const uploadedBgm = document.getElementById('in-bgm-file').files[0];
+    let finalBgmUrl = null;
     if (uploadedBgm) {
       finalBgmUrl = await uploadToStorage(uploadedBgm, 'audio');
+    } else {
+      finalBgmUrl = document.getElementById('bgm-preset-selector').value || null;
     }
 
     const l1Urls = [];
@@ -361,6 +370,8 @@ async function handleFormSubmit(e) {
     }
 
     const secretToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    const attemptsInput = document.getElementById('in-level3-attempts');
+    const selectedAttempts = attemptsInput ? parseInt(attemptsInput.value, 10) : 3;
 
     const payload = {
       star_name: document.getElementById('in-star-name').value,
@@ -374,6 +385,7 @@ async function handleFormSubmit(e) {
       level2_success: document.getElementById('in-level2-success').value,
       level3_image: puzzleUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500',
       level3_desc: document.getElementById('in-level3-desc').value,
+      level3_attempts: selectedAttempts,
       level4_question: document.getElementById('in-level4-question').value,
       level5_secret_word: (document.getElementById('in-level5-word').value || 'SWEET HEART').toUpperCase(),
       level6_letter: document.getElementById('in-level6-letter').value,
@@ -479,6 +491,12 @@ function bindQuestToDOM() {
   document.getElementById('feedback-receiver-name').innerText = questData.sender_name;
   document.getElementById('display-intro-content').innerText = questData.intro_content || '';
 
+  // Personalized Dearest Friend Greeting Fix
+  const letterStarGreeting = document.getElementById('letter-star-name');
+  if (letterStarGreeting) {
+    letterStarGreeting.innerText = questData.star_name || "Friend";
+  }
+
   const heroImg = document.getElementById('display-hero-img');
   heroImg.src = questData.hero_image;
   heroImg.onerror = () => { heroImg.src = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500'; };
@@ -504,8 +522,10 @@ function bindQuestToDOM() {
   document.getElementById('display-level2-intro').innerText = questData.level2_intro || '';
   document.getElementById('display-level2-success').innerText = questData.level2_success || '';
 
-  // Level 3
+  // Level 3 Puzzle Configuration
   document.getElementById('display-level3-desc').innerText = questData.level3_desc || '';
+  puzzleMaxAttempts = questData.level3_attempts || 3;
+  puzzleCurrentAttempt = 1;
 
   // Level 4
   document.getElementById('display-level4-question').innerText = questData.level4_question || '';
@@ -647,29 +667,68 @@ function moveMazePlayer(dx, dy) {
 });
 
 /* ============================================================
-   LEVEL 3: PHOTO PUZZLE & CENTERED TIME-UP MODAL
+   LEVEL 3: PHOTO PUZZLE & MULTI-ATTEMPT ENGINE
    ============================================================ */
-let puzzleState = [1, 2, 0, 3, 4, 5, 6, 8, 7];
-let timerCountdown = 45;
-let puzzleTimer = null;
-let puzzleSolved = false;
-
 function initPuzzleGame() {
   puzzleState = [1, 2, 0, 3, 4, 5, 6, 8, 7];
   timerCountdown = 45;
   puzzleSolved = false;
+
   document.getElementById('level3-next-btn').classList.add('hidden');
   document.getElementById('troll-modal').classList.add('hidden');
+  const attemptModal = document.getElementById('attempt-failed-modal');
+  if (attemptModal) attemptModal.classList.add('hidden');
+
+  updatePuzzleBadge();
   renderPuzzleBoard();
+  startPuzzleCountdown();
+}
+
+function updatePuzzleBadge() {
+  const badge = document.getElementById('puzzle-attempts-badge');
+  if (badge) {
+    badge.innerText = `🎯 Attempt: ${puzzleCurrentAttempt} / ${puzzleMaxAttempts}`;
+  }
+  document.getElementById('puzzle-timer').innerText = `⏳ Time: ${timerCountdown}s`;
+}
+
+function startPuzzleCountdown() {
   clearInterval(puzzleTimer);
   puzzleTimer = setInterval(() => {
     timerCountdown--;
     document.getElementById('puzzle-timer').innerText = `⏳ Time: ${timerCountdown}s`;
+
     if (timerCountdown <= 0) {
       clearInterval(puzzleTimer);
-      document.getElementById('troll-modal').classList.remove('hidden');
+      handlePuzzleTimeout();
     }
   }, 1000);
+}
+
+function handlePuzzleTimeout() {
+  if (puzzleCurrentAttempt < puzzleMaxAttempts) {
+    // There are remaining attempts
+    const attemptModal = document.getElementById('attempt-failed-modal');
+    const desc = document.getElementById('attempt-failed-text');
+    const remaining = puzzleMaxAttempts - puzzleCurrentAttempt;
+    
+    if (desc) {
+      desc.innerText = `Time's up for Attempt ${puzzleCurrentAttempt}! You have ${remaining} chance(s) left.`;
+    }
+    if (attemptModal) attemptModal.classList.remove('hidden');
+
+    const nextBtn = document.getElementById('btn-next-attempt');
+    if (nextBtn) {
+      nextBtn.onclick = () => {
+        attemptModal.classList.add('hidden');
+        puzzleCurrentAttempt++;
+        initPuzzleGame();
+      };
+    }
+  } else {
+    // All attempts exhausted! Reveal auto-solve / extra time troll modal
+    document.getElementById('troll-modal').classList.remove('hidden');
+  }
 }
 
 function renderPuzzleBoard() {
@@ -721,8 +780,10 @@ document.getElementById('auto-solve-btn').addEventListener('click', () => {
 
 document.getElementById('retry-timer-btn').addEventListener('click', () => {
   timerCountdown = 60;
+  puzzleSolved = false;
   document.getElementById('troll-modal').classList.add('hidden');
-  initPuzzleGame();
+  updatePuzzleBadge();
+  startPuzzleCountdown();
 });
 
 /* ============================================================
