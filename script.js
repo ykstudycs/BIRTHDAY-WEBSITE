@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * THE SURPRISE QUEST - MULTI-OCCASION ENGINE
+ * THE SURPRISE QUEST - ENGINE (VERIFIED & FULLY INTEGRATED)
  * ============================================================
  */
 
@@ -127,6 +127,16 @@ const OCCASION_CONFIG = {
 };
 
 /* ============================================================
+   GLOBAL TOGGLE HANDLERS (GUIDES)
+   ============================================================ */
+window.toggleSectionGuide = function(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.toggle('hidden');
+  }
+};
+
+/* ============================================================
    ROUTER: CREATOR STUDIO vs PRIVATE DASHBOARD vs QUEST PLAY
    ============================================================ */
 window.addEventListener('DOMContentLoaded', async () => {
@@ -169,9 +179,22 @@ vinylBtn.addEventListener('click', () => {
 });
 
 /* ============================================================
-   CREATOR MODE: OCCASION & SUB-ROLE HANDLER
+   CREATOR MODE SETUP
    ============================================================ */
 function initCreatorView() {
+  // Creator Guide Toggle Button Listener
+  const guideToggleBtn = document.getElementById('btn-toggle-guide');
+  const guideContent = document.getElementById('creator-guide-content');
+  if (guideToggleBtn && guideContent) {
+    guideToggleBtn.addEventListener('click', () => {
+      guideContent.classList.toggle('hidden');
+      guideToggleBtn.innerText = guideContent.classList.contains('hidden') 
+        ? "📖 Read Creator Guide & Steps" 
+        : "✖️ Hide Guide";
+    });
+  }
+
+  // Occasion & Sub-Roles
   const occasionSelect = document.getElementById('in-occasion-type');
   const subRoleContainer = document.getElementById('sub-role-container');
   const subRoleSelect = document.getElementById('in-sub-role');
@@ -194,6 +217,31 @@ function initCreatorView() {
   occasionSelect.addEventListener('change', updateSubRoles);
   updateSubRoles();
 
+  // Preset Listeners
+  setupPresetListener('intro-presets', 'in-intro-content', {
+    en_1: "May this journey be filled with endless smiles, pure joy, and everything you have ever dreamed of! ✨",
+    en_2: "It takes an absolute saint to handle someone as crazy as you. Gladly signing up for another year of madness! 😜",
+    en_3: "Welcome to your personalized surprise quest! Clear every secret stage to unlock your grand celebration! 🚀",
+    en_4: "Today is all about you! Grateful for every memory, late-night laugh, and adventure we share. ❤️"
+  });
+
+  setupPresetListener('level1-presets', 'in-level1-note', {
+    en_1: "Every picture tells a story of unforgettable laughs, shared moments, and our timeless bond!",
+    en_2: "Looking back at these memories reminds me how lucky I am to have an adventure partner like you!",
+    en_3: "A walk down memory lane... So grateful for every chapter we have written together!"
+  });
+
+  setupPresetListener('level2-presets', 'in-level2-intro', {
+    en_1: "Use your token to navigate through the labyrinth and grab your surprise!",
+    en_2: "Navigate the maze! Your special treat is at the finish line, so do not let the walls slow you down!"
+  });
+
+  setupPresetListener('level6-presets', 'in-level6-letter', {
+    en_1: "In a world full of temporary faces, your presence is the most genuine blessing. Thank you for always being by my side through every up and down. May happiness always surround you!",
+    en_2: "Another beautiful milestone unfolds today! Keep shining bright, chasing big dreams, and never losing your signature laugh. You are truly irreplaceable!"
+  });
+
+  // Soundtrack Preview
   const presetSelector = document.getElementById('bgm-preset-selector');
   const previewBtn = document.getElementById('btn-preview-audio');
   const previewPlayer = document.getElementById('preview-player');
@@ -228,33 +276,48 @@ function initCreatorView() {
     renderAttemptInputs(parseInt(e.target.value, 10));
   });
 
-  // Croppers
-  setupImageInputWithCrop('in-hero-file', 1, (blob) => {
-    heroBlob = blob;
+  // Media Inputs with Video Support
+  setupMediaInput('in-hero-file', 1, (blobOrFile) => {
+    heroBlob = blobOrFile;
     const prev = document.getElementById('crop-preview-hero');
-    prev.src = URL.createObjectURL(blob);
-    prev.classList.remove('hidden');
+    if (blobOrFile.type && blobOrFile.type.startsWith('image/')) {
+      prev.src = URL.createObjectURL(blobOrFile);
+      prev.classList.remove('hidden');
+    } else {
+      prev.classList.add('hidden');
+    }
   });
 
-  setupImageInputWithCrop('in-level3-file', 1, (blob) => {
+  // Puzzle Photo (Strictly Image 1:1)
+  setupMediaInput('in-level3-file', 1, (blob) => {
     puzzleBlob = blob;
     const prev = document.getElementById('crop-preview-puzzle');
     prev.src = URL.createObjectURL(blob);
     prev.classList.remove('hidden');
   });
 
-  setupMultipleImageCrop('in-level1-files', 4/5, (croppedBlobs) => {
-    croppedBlobs.forEach(b => level1Files.push(b));
+  // Slideshow (Photos cropped 4:5, Videos added directly)
+  setupMultipleMediaInput('in-level1-files', 4/5, (items) => {
+    items.forEach(item => level1Files.push(item));
     renderPreviewGrid(level1Files, document.getElementById('slideshow-preview-grid'));
   });
 
-  setupMultipleImageCrop('in-level6-files', 1, (croppedBlobs) => {
-    croppedBlobs.forEach(b => level6Files.push(b));
+  // Polaroid Wall (Photos cropped 1:1, Videos added directly)
+  setupMultipleMediaInput('in-level6-files', 1, (items) => {
+    items.forEach(item => level6Files.push(item));
     renderPreviewGrid(level6Files, document.getElementById('polaroid-preview-grid'));
   });
 
   document.getElementById('btn-fill-sample').addEventListener('click', fillSampleData);
   document.getElementById('quest-form').addEventListener('submit', handleFormSubmit);
+}
+
+function setupPresetListener(selectId, targetId, dict) {
+  const sel = document.getElementById(selectId);
+  const target = document.getElementById(targetId);
+  sel.addEventListener('change', () => {
+    if (dict[sel.value]) target.value = dict[sel.value];
+  });
 }
 
 function renderAttemptInputs(count) {
@@ -286,10 +349,17 @@ function renderAttemptInputs(count) {
 function renderPreviewGrid(arr, container) {
   container.innerHTML = '';
   arr.forEach((item, idx) => {
+    const isVideo = item.type && item.type.startsWith('video/');
     const src = typeof item === 'string' ? item : URL.createObjectURL(item);
     const div = document.createElement('div');
     div.className = 'preview-item';
-    div.innerHTML = `<img src="${src}"/><button type="button" class="btn-del-img">&times;</button>`;
+    
+    if (isVideo) {
+      div.innerHTML = `<video src="${src}" style="width:100%;height:100%;object-fit:cover;"></video><span class="video-badge">🎬</span><button type="button" class="btn-del-img">&times;</button>`;
+    } else {
+      div.innerHTML = `<img src="${src}"/><button type="button" class="btn-del-img">&times;</button>`;
+    }
+
     div.querySelector('.btn-del-img').addEventListener('click', () => {
       arr.splice(idx, 1);
       renderPreviewGrid(arr, container);
@@ -299,9 +369,9 @@ function renderPreviewGrid(arr, container) {
 }
 
 function fillSampleData() {
-  document.getElementById('in-star-name').value = "Rahul";
-  document.getElementById('in-sender-name').value = "Ananya";
-  document.getElementById('in-intro-content').value = "Welcome to your special surprise quest! Clear every challenge to unlock your grand celebration!";
+  document.getElementById('in-star-name').value = "Jessica";
+  document.getElementById('in-sender-name').value = "Arthur";
+  document.getElementById('in-intro-content').value = "Welcome to your personalized surprise quest! Clear every secret stage to unlock your grand celebration!";
   document.getElementById('in-level1-note').value = "Every picture tells a story of unforgettable laughs, shared moments, and our timeless bond!";
   document.getElementById('in-level2-intro').value = "Guide your token to the final surprise target!";
   document.getElementById('in-level3-desc').value = "Rearrange your photo within 45 seconds to unlock the secret chamber!";
@@ -327,61 +397,55 @@ function fillSampleData() {
 }
 
 /* ============================================================
-   IMAGE UPLOAD & CROPPER QUEUE
+   MEDIA CROPPER & VIDEO PASS-THROUGH
    ============================================================ */
-function setupImageInputWithCrop(inputId, aspectRatio, onCroppedCallback) {
+function setupMediaInput(inputId, aspectRatio, onReady) {
   const input = document.getElementById(inputId);
   input.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      alert("⚠️ വീഡിയോയോ മറ്റ് ഫയലുകളോ അനുവദനീയമല്ല! ഫോട്ടോ മാത്രം തിരഞ്ഞെടുക്കുക.");
-      input.value = "";
-      return;
+
+    if (file.type.startsWith('image/')) {
+      openCropperModal(file, aspectRatio, onReady);
+    } else {
+      onReady(file);
     }
-    openCropperModal(file, aspectRatio, onCroppedCallback);
   });
 }
 
-function setupMultipleImageCrop(inputId, aspectRatio, onAllDoneCallback) {
+function setupMultipleMediaInput(inputId, aspectRatio, onAllReady) {
   const input = document.getElementById(inputId);
   input.addEventListener('change', (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
-    const validImages = files.filter(f => {
-      if (!f.type.startsWith('image/')) {
-        alert(`⚠️ ${f.name} ഒരു വീഡിയോ ആയതിനാൽ ഒഴിവാക്കി.`);
-        return false;
-      }
-      return true;
-    });
-
-    if (!validImages.length) {
-      input.value = "";
-      return;
-    }
-
-    const croppedResults = [];
+    const finalItems = [];
     let currentIndex = 0;
 
     function processNext() {
-      if (currentIndex >= validImages.length) {
+      if (currentIndex >= files.length) {
         input.value = "";
-        onAllDoneCallback(croppedResults);
+        onAllReady(finalItems);
         return;
       }
-      const currentFile = validImages[currentIndex];
-      document.getElementById('crop-modal-title').innerText = `Crop Photo (${currentIndex + 1} of ${validImages.length})`;
+      const currentFile = files[currentIndex];
       
-      openCropperModal(currentFile, aspectRatio, (blob) => {
-        croppedResults.push(blob);
+      if (currentFile.type.startsWith('video/')) {
+        finalItems.push(currentFile);
         currentIndex++;
         processNext();
-      }, () => {
-        currentIndex++;
-        processNext();
-      });
+      } else {
+        document.getElementById('crop-modal-title').innerText = `Crop Photo (${currentIndex + 1} of ${files.length}): ${currentFile.name}`;
+        openCropperModal(currentFile, aspectRatio, (blob) => {
+          finalItems.push(blob);
+          currentIndex++;
+          processNext();
+        }, () => {
+          finalItems.push(currentFile);
+          currentIndex++;
+          processNext();
+        });
+      }
     }
     processNext();
   });
@@ -421,13 +485,14 @@ function openCropperModal(file, aspectRatio, onSave, onCancel) {
 }
 
 /* ============================================================
-   SUPABASE UPLOAD & SUBMIT
+   SUPABASE UPLOAD & SUBMISSION
    ============================================================ */
 async function uploadToStorage(fileOrBlob, folder = 'uploads') {
   if (!fileOrBlob) return null;
   if (typeof fileOrBlob === 'string') return fileOrBlob;
 
-  const ext = fileOrBlob.type ? fileOrBlob.type.split('/')[1] : 'jpg';
+  const isVideo = fileOrBlob.type && fileOrBlob.type.startsWith('video/');
+  const ext = fileOrBlob.name ? fileOrBlob.name.split('.').pop() : (isVideo ? 'mp4' : 'jpg');
   const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
 
   const { data, error } = await supabaseClient.storage
@@ -450,11 +515,18 @@ async function handleFormSubmit(e) {
   btn.innerText = 'Creating Quest & Uploading... ⏳';
 
   try {
-    let heroUrl = heroBlob ? await uploadToStorage(heroBlob, 'avatars') : (level1Files[0] || 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500');
-    let puzzleUrl = puzzleBlob ? await uploadToStorage(puzzleBlob, 'puzzles') : (level1Files[1] || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500');
+    let heroUrl = heroBlob 
+      ? await uploadToStorage(heroBlob, 'avatars') 
+      : (level1Files[0] || 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500');
+
+    let puzzleUrl = puzzleBlob 
+      ? await uploadToStorage(puzzleBlob, 'puzzles') 
+      : (level1Files[1] || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500');
 
     const uploadedBgm = document.getElementById('in-bgm-file').files[0];
-    let finalBgmUrl = uploadedBgm ? await uploadToStorage(uploadedBgm, 'audio') : (document.getElementById('bgm-preset-selector').value || null);
+    let finalBgmUrl = uploadedBgm 
+      ? await uploadToStorage(uploadedBgm, 'audio') 
+      : (document.getElementById('bgm-preset-selector').value || null);
 
     const l1Urls = [];
     for (const f of level1Files) {
@@ -535,7 +607,7 @@ async function handleFormSubmit(e) {
 }
 
 /* ============================================================
-   ADMIN / CREATOR PRIVATE FEEDBACK LOADER
+   ADMIN FEEDBACK VIEW
    ============================================================ */
 async function loadAdminFeedback(questId, adminSecret) {
   const container = document.getElementById('feedback-records-container');
@@ -577,7 +649,7 @@ async function loadAdminFeedback(questId, adminSecret) {
 }
 
 /* ============================================================
-   PLAY MODE: DATA BINDING & DYNAMIC OCCASION LABELS
+   PLAY MODE: DATA BINDING & RUNNER
    ============================================================ */
 async function loadQuestData(id) {
   const { data, error } = await supabaseClient.from('quests').select('*').eq('id', id).single();
@@ -593,7 +665,6 @@ function bindQuestToDOM() {
   const occasion = questData.occasion_type || 'birthday';
   const config = OCCASION_CONFIG[occasion] || OCCASION_CONFIG.birthday;
 
-  // Dynamic Headings based on occasion
   document.getElementById('play-quest-header-title').innerText = occasion.toUpperCase() + " QUEST";
   document.getElementById('display-star-name').innerText = questData.star_name;
   document.getElementById('display-main-heading').innerText = config.mainHeading(questData.star_name);
@@ -615,7 +686,7 @@ function bindQuestToDOM() {
     bgm.src = questData.bgm_url;
   }
 
-  // Level 1 Slideshow
+  // Level 1 Slideshow (Supports Video & Photo)
   const track = document.getElementById('carousel-track');
   track.innerHTML = '';
   const images = (questData.level1_images && questData.level1_images.length) 
@@ -623,7 +694,12 @@ function bindQuestToDOM() {
     : ['https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500'];
 
   images.forEach(url => {
-    track.innerHTML += `<div class="carousel-slide"><img src="${url}" onerror="this.src='https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500'"/></div>`;
+    const isVideo = url.endsWith('.mp4') || url.includes('/video');
+    if (isVideo) {
+      track.innerHTML += `<div class="carousel-slide"><video src="${url}" controls playsinline style="width:100%;height:100%;object-fit:cover;"></video></div>`;
+    } else {
+      track.innerHTML += `<div class="carousel-slide"><img src="${url}" onerror="this.src='https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500'"/></div>`;
+    }
   });
   document.getElementById('display-level1-note').innerText = questData.level1_note || '';
   initCarouselEngine();
@@ -655,7 +731,7 @@ function bindQuestToDOM() {
   document.getElementById('morse-dots-display').innerText = morseCodeDisplay;
   initMorseVerification(word);
 
-  // Level 6 Polaroids
+  // Level 6 Polaroids / Media Wall (Supports Video & Photo)
   document.getElementById('display-level6-letter').innerText = questData.level6_letter || '';
   const polGrid = document.getElementById('display-polaroid-grid');
   polGrid.innerHTML = '';
@@ -669,12 +745,23 @@ function bindQuestToDOM() {
   pols.forEach((url, i) => {
     const rot = rotations[i % rotations.length];
     const cap = captions[i % captions.length];
-    polGrid.innerHTML += `
-      <div class="vintage-polaroid" style="transform: rotate(${rot}deg);">
-        <div class="tape-strip"></div>
-        <img src="${url}" onerror="this.src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'"/>
-        <span class="polaroid-caption">${cap}</span>
-      </div>`;
+    const isVideo = url.endsWith('.mp4') || url.includes('/video');
+
+    if (isVideo) {
+      polGrid.innerHTML += `
+        <div class="vintage-polaroid" style="transform: rotate(${rot}deg);">
+          <div class="tape-strip"></div>
+          <video src="${url}" controls playsinline style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:2px;"></video>
+          <span class="polaroid-caption">${cap}</span>
+        </div>`;
+    } else {
+      polGrid.innerHTML += `
+        <div class="vintage-polaroid" style="transform: rotate(${rot}deg);">
+          <div class="tape-strip"></div>
+          <img src="${url}" onerror="this.src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'"/>
+          <span class="polaroid-caption">${cap}</span>
+        </div>`;
+    }
   });
 
   document.querySelectorAll('.fb-chip').forEach(chip => {
@@ -992,16 +1079,18 @@ function calculateSimilarity(str1, str2) {
 }
 
 /* ============================================================
-   LEVEL 6: CANDLE / SURPRISE & FEEDBACK SAVER
+   LEVEL 6: 3D REALISTIC CAKE & BLOWOUT
    ============================================================ */
 const candle = document.getElementById('candle');
 candle.addEventListener('click', () => {
   if (!candle.classList.contains('extinguished')) {
     candle.classList.add('extinguished');
-    document.getElementById('flame').style.display = 'none';
+    const flame = document.getElementById('flame');
+    if (flame) flame.style.display = 'none';
+    
     document.getElementById('candle-hint').style.display = 'none';
     document.getElementById('wish-revealed').classList.remove('hidden');
-    confetti({ particleCount: 200, spread: 100 });
+    confetti({ particleCount: 220, spread: 100, origin: { y: 0.6 } });
   }
 });
 
