@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#fcfaf6" />
-  <title>The Birthday Quest ✨</title>
+  <title>The Surprise Quest ✨</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -28,34 +28,75 @@
     <div class="creamy-card">
       <div class="form-header">
         <div class="header-top-row">
-          <span class="badge">🎁 Quest Creator Studio</span>
+          <span class="badge">🎁 Surprise Quest Studio</span>
           <button type="button" id="btn-fill-sample" class="btn-sample">⚡ Fill Sample Data</button>
         </div>
-        <h2>Create Birthday Quest</h2>
+        <h2>Create Custom Surprise Quest</h2>
         <p>Tailor every level for someone truly special.</p>
       </div>
 
+      <!-- About & Expandable Creator Guide -->
+      <div class="quest-info-card">
+        <p class="quest-summary">
+          <strong>✨ What is The Surprise Quest?</strong><br>
+          Transform any wish or celebration into an interactive, gamified journey! The recipient plays through custom maze challenges, memory puzzles, morse decoders, and celebration triggers to unveil your heartfelt final letter and memory wall.
+        </p>
+        <button type="button" id="btn-toggle-guide" class="btn-guide-toggle">📖 Read Creator Guide & Steps</button>
+        
+        <div id="creator-guide-content" class="guide-details hidden">
+          <ol class="guide-steps-list">
+            <li><strong>Occasion & Details:</strong> Select event type, role, names, and crop the recipient's portrait photo.</li>
+            <li><strong>Soundtrack:</strong> Pick an ambient preset track (with preview) or upload your own custom MP3.</li>
+            <li><strong>Level 1 Memories:</strong> Upload candid photos (all images are auto-cropped for optimal viewing).</li>
+            <li><strong>Level 2 Target Maze:</strong> Customize the maze challenge prompt before they reach the surprise.</li>
+            <li><strong>Level 3 Photo Puzzle:</strong> Crop a portrait image into a 3x3 sliding puzzle, set attempts, and teaser failure messages.</li>
+            <li><strong>Level 4 & 5:</strong> Configure the truth trap question, custom success note, and secret Morse phrase.</li>
+            <li><strong>Level 6 Finale:</strong> Write your heart-touching note and curate the grand polaroid photo wall!</li>
+            <li><strong>Receive Feedback:</strong> Copy your private dashboard link to secretly view their replies anytime!</li>
+          </ol>
+        </div>
+      </div>
+
       <form id="quest-form">
-        <!-- 0. Core Details -->
-        <div class="section-divider">0. Core Details</div>
+        <!-- 0. Occasion & Core Details -->
+        <div class="section-divider">0. Occasion & Core Details</div>
         <div class="level-help-toggle" onclick="toggleSectionGuide('guide-0')">💡 ഈ ലെവലിനെ കുറിച്ച് അറിയാൻ (Level Info & Guide)</div>
         <div id="guide-0" class="level-guide-box hidden">
-          ഇവിടെ ബർത്ത്‌ഡേ സ്റ്റാറിന്റെ പേര്, നിങ്ങളുടെ പേര്, പ്രധാന പോർട്രെയ്റ്റ് ഫോട്ടോ (ഹീറോ ഫോട്ടോ) എന്നിവ നൽകുക. ഫോട്ടോ ക്രോപ്പ് ചെയ്ത് കൃത്യമായ അനുപാതത്തിലാക്കാൻ അവസരമുണ്ട്.
+          ഏത് ആഘോഷത്തിനാണ് ഈ ക്വസ്റ്റ് തയ്യാറാക്കുന്നത് എന്ന് തിരഞ്ഞെടുക്കുക (Birthday, Friendship, Wedding, Love, Siblings മുതലായവ). അതിനുശേഷം ആ വ്യക്തിയുമായുള്ള ബന്ധം, പേരുകൾ, അവരുടെ പോർട്രെയ്റ്റ് ഫോട്ടോ എന്നിവ നൽകുക.
+        </div>
+
+        <div class="field">
+          <label>Select Occasion / Event Type 🎯</label>
+          <select id="in-occasion-type" class="creamy-select">
+            <option value="birthday" selected>🎂 Birthday Celebration</option>
+            <option value="friendship">🤝 Friendship (Bestie / Partner)</option>
+            <option value="wedding">💍 Wedding / Pre-Wedding (Groom / Bride)</option>
+            <option value="love">❤️ Love / Anniversary (Husband / Wife / Lover)</option>
+            <option value="siblings">👨‍👩‍👦 Siblings (Brother / Sister)</option>
+            <option value="farewell">✈️ Farewell / Send-Off</option>
+            <option value="congrats">🏆 Success / Achievement Celebration</option>
+          </select>
+        </div>
+
+        <!-- Dynamic Sub-role selector -->
+        <div id="sub-role-container" class="field hidden">
+          <label id="sub-role-label">Specific Role / Relation</label>
+          <select id="in-sub-role" class="creamy-select"></select>
         </div>
 
         <div class="input-row">
           <div class="field">
-            <label>Birthday Star's Name</label>
+            <label>Recipient's Name (രസിതാവിന്റെ പേര്)</label>
             <input type="text" id="in-star-name" required placeholder="Their Name" class="creamy-input" />
           </div>
           <div class="field">
-            <label>Your Name (Creator)</label>
+            <label>Your Name (Creator / നിങ്ങളുടെ പേര്)</label>
             <input type="text" id="in-sender-name" required placeholder="Your Name" class="creamy-input" />
           </div>
         </div>
 
         <div class="field">
-          <label>Birthday Star's Portrait (Hero Photo) 📸</label>
+          <label>Recipient's Portrait (Hero Photo) 📸</label>
           <input type="file" id="in-hero-file" accept="image/*" class="creamy-input" />
           <div class="crop-preview-wrap"><img id="crop-preview-hero" class="img-preview hidden"/></div>
         </div>
@@ -77,7 +118,7 @@
           <div class="divider-text">OR</div>
           <input type="file" id="in-bgm-file" accept="audio/*" class="creamy-input" />
           <small class="dim-hint" style="color: #9a6527; font-weight: 600; line-height: 1.4; margin-top: 6px;">
-            💡 <strong>ശ്രദ്ധിക്കുക:</strong> പ്രീസെറ്റ് പാട്ടുകൾ ടെസ്റ്റ് ചെയ്യാം അല്ലെങ്കിൽ സ്വന്തം ഓഡിയോ അപ്‌ലോഡ് ചെയ്യാം. രണ്ടും നൽകിയിട്ടുണ്ടെങ്കിൽ അപ്‌ലോഡ് ചെയ്യുന്ന ഫയലിനായിരിക്കും (Uploaded Audio) ആദ്യ മുൻഗണന!
+            💡 <strong>ശ്രദ്ധിക്കുക:</strong> മുകളിലെ ലിസ്റ്റിൽ നിന്ന് പാട്ടുകൾ കേട്ടുനോക്കി തിരഞ്ഞെടുക്കാം അല്ലെങ്കിൽ സ്വന്തം ഫയൽ അപ്‌ലോഡ് ചെയ്യാം. രണ്ടും നൽകിയിട്ടുണ്ടെങ്കിൽ അപ്‌ലോഡ് ചെയ്യുന്ന ഫയലിനായിരിക്കും (Uploaded Audio) ആദ്യ മുൻഗണന!
           </small>
         </div>
 
@@ -85,19 +126,19 @@
           <label>Intro Message</label>
           <select id="intro-presets" class="creamy-select">
             <option value="custom">-- Custom Message --</option>
-            <option value="en_1">Warm: May your birthday be filled with endless smiles and pure joy!</option>
-            <option value="en_2">Funny: It takes an absolute saint to handle someone as crazy as you. Happy Birthday!</option>
-            <option value="en_3">Adventurous: Welcome to your secret birthday quest. Ready for the surprises?</option>
+            <option value="en_1">Warm: May this journey be filled with endless smiles and pure joy!</option>
+            <option value="en_2">Funny: It takes an absolute saint to handle someone as crazy as you!</option>
+            <option value="en_3">Adventurous: Welcome to your secret quest. Ready for the surprises?</option>
             <option value="en_4">Heartfelt: So grateful to have someone as irreplaceable as you in my journey.</option>
           </select>
-          <textarea id="in-intro-content" rows="3" class="creamy-textarea mt-1" placeholder="Type intro message..."></textarea>
+          <textarea id="in-intro-content" rows="3" class="creamy-textarea mt-1" placeholder="Type intro message...">Welcome to your personalized surprise quest! Clear every secret stage to unlock your grand celebration!</textarea>
         </div>
 
         <!-- 1. Slideshow -->
         <div class="section-divider">1. Memory Slideshow</div>
         <div class="level-help-toggle" onclick="toggleSectionGuide('guide-1')">💡 ഈ ലെവലിനെ കുറിച്ച് അറിയാൻ (Level Info & Guide)</div>
         <div id="guide-1" class="level-guide-box hidden">
-          നിങ്ങളുടെ ഓർമ്മച്ചിത്രങ്ങൾ ഒരു കറൗസൽ സ്ലൈഡ്‌ഷോ ആയി കാണിക്കും. എത്ര ഫോട്ടോകൾ വേണമെങ്കിലും തിരഞ്ഞെടുക്കാം (വീഡിയോകൾ അനുവദനീയമല്ല). തിരഞ്ഞെടുക്കുന്ന ഓരോ ഫോട്ടോയും കൃത്യമായി ക്രോപ്പ് ചെയ്ത ശേഷമേ ലിസ്റ്റിലേക്ക് ആഡ് ആകൂ.
+          നിങ്ങളുടെ പ്രിയപ്പെട്ട ഓർമ്മച്ചിത്രങ്ങൾ ഇവിടെ അപ്‌ലോഡ് ചെയ്യാം. എത്ര ഫോട്ടോകൾ വേണമെങ്കിലും സെലക്ട് ചെയ്യാം (വീഡിയോകൾ അനുവദനീയമല്ല). തിരഞ്ഞെടുക്കുന്ന ഓരോ ഫോട്ടോയും കൃത്യമായി ക്രോപ്പ് ചെയ്ത ശേഷമേ ആഡ് ആകൂ.
         </div>
         <div class="field">
           <label>Select Memory Photos 🖼️ (ക്രോപ്പ് ചെയ്ത് ആഡ് ചെയ്യുക)</label>
@@ -108,38 +149,38 @@
           <label>Slideshow Caption / Note</label>
           <select id="level1-presets" class="creamy-select">
             <option value="custom">-- Custom Caption --</option>
-            <option value="en_1">Every picture tells a story of unforgettable laughs and golden moments!</option>
+            <option value="en_1">Every picture tells a story of unforgettable laughs, shared moments, and our timeless bond!</option>
             <option value="en_2">Timeless frames of our journey together. Here is to making many more!</option>
             <option value="en_3">Looking back at these moments makes me realize how blessed I am to have you.</option>
           </select>
-          <textarea id="in-level1-note" rows="3" class="creamy-textarea mt-1" placeholder="Type caption here..."></textarea>
+          <textarea id="in-level1-note" rows="3" class="creamy-textarea mt-1" placeholder="Type caption here...">Every picture tells a story of unforgettable laughs, shared moments, and our timeless bond!</textarea>
         </div>
 
         <!-- 2. Maze -->
-        <div class="section-divider">2. Birthday Cake Maze</div>
+        <div class="section-divider">2. Target Mini-Maze</div>
         <div class="level-help-toggle" onclick="toggleSectionGuide('guide-2')">💡 ഈ ലെവലിനെ കുറിച്ച് അറിയാൻ (Level Info & Guide)</div>
         <div id="guide-2" class="level-guide-box hidden">
-          ബർത്ത്‌ഡേ സ്റ്റാർ അവരുടെ ടോക്കൺ ഉപയോഗിച്ച് വഴികൾ കണ്ടെത്തി കേക്കിനടുത്ത് എത്തേണ്ട ഒരു മിനി-മേസ് ഗെയിമാണിത്. അവർക്ക് നൽകേണ്ട രസകരമായ പ്രോംപ്റ്റും കേക്ക് കിട്ടുമ്പോൾ കാണിക്കേണ്ട സന്ദേശവും ഇവിടെ നൽകാം.
+          കളിക്കുന്നയാൾ അവരുടെ അവതാർ ടോക്കൺ മൂവ് ചെയ്ത് മേസ് കടന്ന് ടാർഗെറ്റിലേക്ക് എത്തണം. ബർത്ത്‌ഡേയ്ക്ക് കേക്കും, ഫ്രണ്ട്ഷിപ്പിന് ട്രോഫിയും, വെഡ്ഡിംഗിന് മോതിരവും, പ്രണയത്തിന് ഹൃദയവും തനിയെ ലക്ഷ്യമായി സെറ്റ് ആകും!
         </div>
         <div class="field">
           <label>Maze Message / Prompt</label>
           <select id="level2-presets" class="creamy-select">
             <option value="custom">-- Custom Prompt --</option>
-            <option value="en_1">Use your token to navigate through the labyrinth and grab that birthday cake!</option>
-            <option value="en_2">Don't think you can devour that whole cake alone just because it's your birthday!</option>
+            <option value="en_1">Use your token to navigate through the labyrinth and grab your surprise!</option>
+            <option value="en_2">Navigate the maze! Your special treat is at the finish line!</option>
           </select>
-          <textarea id="in-level2-intro" rows="2" class="creamy-textarea mt-1" placeholder="Type message..."></textarea>
+          <textarea id="in-level2-intro" rows="2" class="creamy-textarea mt-1" placeholder="Type message...">Guide your token to the final surprise target!</textarea>
         </div>
         <div class="field">
-          <label>Cake Found Success Text</label>
-          <input type="text" id="in-level2-success" class="creamy-input" value="Awesome! You reached the cake! Now don't forget my slice! 🍰🎉" />
+          <label>Target Found Success Text</label>
+          <input type="text" id="in-level2-success" class="creamy-input" value="Awesome! You reached the target! 🎯✨" />
         </div>
 
         <!-- 3. Puzzle -->
         <div class="section-divider">3. Photo Puzzle</div>
         <div class="level-help-toggle" onclick="toggleSectionGuide('guide-3')">💡 ഈ ലെവലിനെ കുറിച്ച് അറിയാൻ (Level Info & Guide)</div>
         <div id="guide-3" class="level-guide-box hidden">
-          നിങ്ങൾ തിരഞ്ഞെടുക്കുന്ന ഒരു ഫോട്ടോ 3x3 സ്ലൈഡിംഗ് പസിൽ ആയി മാറും. ഓരോ അറ്റെംപ്റ്റിലും 45 സെക്കൻഡ് ലഭിക്കും. ക്രിയേറ്റർക്ക് 1 മുതൽ 5 വരെ അറ്റെംപ്റ്റുകൾ നൽകാം (Default: 2). ഓരോ അറ്റെംപ്റ്റിലും സമയം തീരുമ്പോൾ എന്തെങ്കിലും കളിപറയുന്ന മെസ്സേജ് നൽകണമെങ്കിൽ അതും താഴെ ടൈപ്പ് ചെയ്യാം!
+          നിങ്ങൾ നൽകുന്ന ഒരു ഫോട്ടോ 3x3 സ്ലൈഡിംഗ് പസിൽ ആയി മാറും. ഓരോ അറ്റെംപ്റ്റിലും 45 സെക്കൻഡ് ലഭിക്കും. ക്രിയേറ്റർക്ക് 1 മുതൽ 5 വരെ അറ്റെംപ്റ്റുകൾ നൽകാം (ഡിഫോൾട്ട്: 2). ഓരോ തവണയും സമയം തീർന്നാൽ കളിയാക്കുന്നതോ പ്രോത്സാഹിപ്പിക്കുന്നതോ ആയ കസ്റ്റം മെസ്സേജുകൾ താഴെ നൽകാം.
         </div>
         <div class="field">
           <label>Puzzle Photo (1:1 Ratio Crop) 🧩</label>
@@ -162,50 +203,49 @@
         </div>
 
         <!-- Dynamic Attempt Messages Container -->
-        <div id="attempt-messages-container" class="attempt-custom-box">
-          <!-- Populated by JavaScript based on attempt count -->
-        </div>
+        <div id="attempt-messages-container" class="attempt-custom-box"></div>
 
         <!-- 4. Trap -->
         <div class="section-divider">4. The Litmus Test</div>
         <div class="level-help-toggle" onclick="toggleSectionGuide('guide-4')">💡 ഈ ലെവലിനെ കുറിച്ച് അറിയാൻ (Level Info & Guide)</div>
         <div id="guide-4" class="level-guide-box hidden">
-          ഒരു ചോദ്യവും "YES", "NO" ബട്ടണുകളും. "NO" ക്ലിക്ക് ചെയ്യാൻ ശ്രമിക്കുമ്പോൾ ബട്ടൺ ഓടിയൊളിക്കും! അവസാനം "YES" ക്ലിക്ക് ചെയ്യുമ്പോൾ കാണിക്കേണ്ട രസകരമായ മെസ്സേജ് നിങ്ങൾക്ക് താഴെ കസ്റ്റമൈസ് ചെയ്യാം.
+          ഒരു രസകരമായ ചോദ്യം ചോദിക്കുക. 'NO' ക്ലിക്ക് ചെയ്യാൻ ശ്രമിക്കുമ്പോൾ ബട്ടൺ തനിയെ ഓടിമാറും! അവസാനം 'YES' ക്ലിക്ക് ചെയ്യുമ്പോൾ കാണിക്കേണ്ട സന്ദേശം നിങ്ങൾക്ക് താഴെ കസ്റ്റമൈസ് ചെയ്യാം.
         </div>
         <div class="field">
           <label>Runaway Question</label>
-          <input type="text" id="in-level4-question" class="creamy-input" value="Do you admit that I am the single coolest and most caring friend you have? 😜" />
+          <input type="text" id="in-level4-question" class="creamy-input" value="Do you admit that I am the single coolest and most special person in your life? 😜" />
         </div>
         <div class="field">
           <label>When YES is Clicked (Success Response Content) 🎉</label>
-          <textarea id="in-level4-success" rows="2" class="creamy-textarea" placeholder="ഉദാ: I knew it! Truth always wins! Unlocked the secret chamber for you! 😍"></textarea>
+          <textarea id="in-level4-success" rows="2" class="creamy-textarea" placeholder="I knew it! Truth always wins! Unlocked the secret chamber for you! 😍">I knew it! Truth always wins! Unlocked the secret chamber for you! 😍</textarea>
         </div>
 
         <!-- 5. Morse Code -->
         <div class="section-divider">5. Secret Morse Code Message</div>
         <div class="level-help-toggle" onclick="toggleSectionGuide('guide-5')">💡 ഈ ലെവലിനെ കുറിച്ച് അറിയാൻ (Level Info & Guide)</div>
         <div id="guide-5" class="level-guide-box hidden">
-          നിങ്ങൾ നൽകുന്ന ഒരു ഇംഗ്ലീഷ് വാക്ക് മോഴ്സ് കോഡ് സിഗ്നലുകളായി മാറും. 3 അവസരങ്ങൾക്കുള്ളിൽ അവർക്കത് ഡീകോഡ് ചെയ്ത് എന്റർ ചെയ്യാം.
+          നിങ്ങൾ നൽകുന്ന ഒരു രഹസ്യ ഇംഗ്ലീഷ് വാക്ക് മോഴ്സ് കോഡ് ചിഹ്നങ്ങളായി മാറും. 3 ശ്രമങ്ങൾക്കുള്ളിൽ അവർക്കത് കണ്ടെത്തി ടൈപ്പ് ചെയ്യാം.
         </div>
         <div class="field">
           <label>Secret Word / Phrase (English) 📻</label>
           <input type="text" id="in-level5-word" class="creamy-input" placeholder="BEST FRIEND" value="BEST FRIEND" />
+          <small class="dim-hint">Recipient will get 3 attempts to decrypt and enter this word.</small>
         </div>
 
         <!-- 6. Finale -->
         <div class="section-divider">6. Grand Finale</div>
         <div class="level-help-toggle" onclick="toggleSectionGuide('guide-6')">💡 ഈ ലെവലിനെ കുറിച്ച് അറിയാൻ (Level Info & Guide)</div>
         <div id="guide-6" class="level-guide-box hidden">
-          മെഴുതിരി ഊതിക്കെടുക്കുന്ന കേക്കും നിങ്ങളുടെ മനസ്സുനിറഞ്ഞ സ്നേഹക്കുറിപ്പും (Letter) പോളറോയിഡ് മെമ്മറി വാളും അടങ്ങിയ ഫൈനൽ സർപ്രൈസ് പേജ്.
+          ക്വസ്റ്റിന്റെ അവസാന ഘട്ടം! നിങ്ങളുടെ ഹൃദയസ്പർശിയായ കത്തും (Letter), പോളറോയിഡ് മെമ്മറി വാളും, അവർക്ക് തിരികെ മെസ്സേജ് അയക്കാനുള്ള ഫീഡ്‌ബാക്ക് ബോക്സും ഇവിടെ പ്രദർശിപ്പിക്കും.
         </div>
         <div class="field">
-          <label>Heartfelt Birthday Letter</label>
+          <label>Heartfelt Letter / Note</label>
           <select id="level6-presets" class="creamy-select">
             <option value="custom">-- Custom Letter --</option>
-            <option value="en_1">In a world full of temporary faces, your friendship is the most genuine blessing. Thank you for always being by my side through every up and down. May this year shower you with boundless success and unmatched happiness!</option>
-            <option value="en_2">Another chapter unfolds today! Keep shining bright, chasing big dreams, and never losing your signature laugh. You are irreplaceable!</option>
+            <option value="en_1">In a world full of temporary faces, your presence is the most genuine blessing. Thank you for always being by my side through every up and down. May happiness always surround you!</option>
+            <option value="en_2">Another beautiful milestone unfolds today! Keep shining bright, chasing big dreams, and never losing your signature laugh. You are truly irreplaceable!</option>
           </select>
-          <textarea id="in-level6-letter" rows="4" class="creamy-textarea mt-1" placeholder="Type final letter..."></textarea>
+          <textarea id="in-level6-letter" rows="4" class="creamy-textarea mt-1" placeholder="Type final letter...">In a world of fleeting connections, your presence is a rare and comforting blessing. Thank you for standing by me through thick and thin, for lighting up the darkest days, and for being your wonderfully authentic self!</textarea>
         </div>
         <div class="field">
           <label>Polaroid Wall Photos 📷 (ക്രോപ്പ് ചെയ്ത് ആഡ് ചെയ്യുക)</label>
@@ -226,10 +266,10 @@
       <h3 class="text-center">🎉 Quest Generated Successfully!</h3>
       <p class="dim-hint text-center mt-1">Here are your two exclusive links. Copy and keep them safe!</p>
       
-      <!-- Link 1: Birthday Star Link -->
+      <!-- Link 1: Recipient Link -->
       <div class="link-box mt-2">
-        <label class="link-title">1. Link for Birthday Star 🎂</label>
-        <p class="link-desc">Send this link to your friend to let them play the quest:</p>
+        <label class="link-title">1. Link for Recipient 🎁</label>
+        <p class="link-desc">Send this link to your friend/loved one:</p>
         <div class="link-input-group">
           <input type="text" id="star-link-input" readonly class="creamy-input small-text" />
           <button type="button" id="btn-copy-star" class="btn-copy">📋 Copy</button>
@@ -239,7 +279,7 @@
       <!-- Link 2: Creator Private Feedback Dashboard -->
       <div class="link-box mt-2 private-box">
         <label class="link-title">2. Your Private Feedback Link 🔒</label>
-        <p class="link-desc"><strong>DO NOT share this with anyone!</strong> Open this link anytime to see if your friend submitted a feedback reply:</p>
+        <p class="link-desc"><strong>DO NOT share this!</strong> Open anytime to check if they submitted a reply:</p>
         <div class="link-input-group">
           <input type="text" id="creator-link-input" readonly class="creamy-input small-text" />
           <button type="button" id="btn-copy-creator" class="btn-copy">📋 Copy</button>
@@ -247,7 +287,7 @@
       </div>
 
       <div class="crop-actions mt-3">
-        <button type="button" id="btn-open-star-quest" class="btn-create">Play As Birthday Star 🚀</button>
+        <button type="button" id="btn-open-star-quest" class="btn-create">Play Quest Now 🚀</button>
       </div>
     </div>
   </div>
@@ -271,14 +311,12 @@
     <div class="creamy-card">
       <div class="form-header text-center">
         <span class="badge">🔒 Private Dashboard</span>
-        <h2>Birthday Quest Responses</h2>
-        <p id="admin-welcome-text">Checking responses for your created quest...</p>
+        <h2>Surprise Quest Responses</h2>
+        <p id="admin-welcome-text">Checking responses...</p>
       </div>
-      
       <div id="feedback-records-container" class="mt-2">
         <div class="loading-spinner text-center">Loading feedback... ⏳</div>
       </div>
-
       <button type="button" class="btn btn-secondary mt-3" onclick="window.location.reload()">Refresh Feedback 🔄</button>
     </div>
   </div>
@@ -296,7 +334,7 @@
     <header class="app-header">
       <div class="progress-wrap">
         <div class="progress-info">
-          <span class="quest-title">BIRTHDAY QUEST</span>
+          <span class="quest-title" id="play-quest-header-title">SURPRISE QUEST</span>
           <span id="stage-text" class="stage-text">Stage 0 of 6</span>
         </div>
         <div class="progress-bar-bg">
@@ -314,9 +352,9 @@
         <div class="light-card text-center hero-card">
           <div class="avatar-halo-wrap">
             <div class="halo-ring"></div>
-            <img id="display-hero-img" src="" alt="Birthday Star" class="hero-avatar" />
+            <img id="display-hero-img" src="" alt="Recipient" class="hero-avatar" />
           </div>
-          <h1 class="champagne-title">Happy Birthday <span id="display-star-name" class="highlight-name"></span>! 🎉</h1>
+          <h1 class="champagne-title" id="display-main-heading">Surprise for <span id="display-star-name" class="highlight-name"></span>! 🎉</h1>
           <p id="display-intro-content" class="hero-desc"></p>
           <button id="start-quest-btn" class="btn btn-primary pulse-btn">Start The Quest 🚀</button>
         </div>
@@ -344,7 +382,7 @@
       <section id="level-2" class="quest-stage">
         <div class="light-card text-center">
           <div class="stage-tag">Level 2 • Mini-Maze</div>
-          <h2 class="stage-heading">Reach The Cake! 🎂</h2>
+          <h2 class="stage-heading" id="maze-heading">Reach The Target! 🎯</h2>
           <div class="maze-intro-box">
             <p id="display-level2-intro"></p>
           </div>
@@ -420,7 +458,6 @@
             <button id="no-btn" class="btn btn-no small-no-btn">NO 😜</button>
           </div>
 
-          <!-- Highlighted Selection Feedback with Custom Message -->
           <div id="trap-success" class="trap-feedback hidden">
             <div class="choice-tag">✨ Your Confirmed Choice: <strong>YES! Definitely! 😍</strong></div>
             <h3 id="display-trap-title">I knew it! Truth always wins! 😍</h3>
@@ -464,7 +501,9 @@
       <section id="level-6" class="quest-stage">
         <div class="light-card text-center finale-card">
           <div class="stage-tag">Grand Finale • Celebration</div>
-          <h1 class="champagne-title large">Happy Birthday! 🎂</h1>
+          <h1 class="champagne-title large" id="finale-main-heading">Happy Celebration! 🎉</h1>
+          
+          <!-- Interactive Celebration Object -->
           <div class="cake-container">
             <div class="cake">
               <div class="candle" id="candle"><div class="flame" id="flame"></div></div>
@@ -472,13 +511,13 @@
               <div class="cake-bottom"></div>
             </div>
           </div>
-          <p id="candle-hint" class="candle-hint">Touch the candle to extinguish the flame! 🕯️💨</p>
-          <div id="wish-revealed" class="wish-banner hidden">Happy Birthday To You! 🌟</div>
+          <p id="candle-hint" class="candle-hint">Touch to ignite the final surprise! 🕯️✨</p>
+          <div id="wish-revealed" class="wish-banner hidden">Surprise Unlocked! 🌟</div>
 
           <!-- Personalized Greeting Letter -->
           <div class="letter-card">
             <div class="wax-seal">★</div>
-            <h3 class="letter-greeting">Dearest <span id="letter-star-name">Friend</span>,</h3>
+            <h3 class="letter-greeting" id="letter-greeting-title">Dearest <span id="letter-star-name">Friend</span>,</h3>
             <p id="display-level6-letter" class="letter-body"></p>
             <div class="letter-sign">— With love, <span id="display-sender-name"></span> ❤️</div>
           </div>
@@ -486,7 +525,7 @@
           <h3 class="gallery-heading">Memory Wall 🎞️</h3>
           <div id="display-polaroid-grid" class="grand-polaroid-wall"></div>
 
-          <!-- Feedback Box with Presets & Auto-Clear -->
+          <!-- Feedback Box -->
           <div class="feedback-card">
             <h4>Leave a Reply for <span id="feedback-receiver-name"></span> 💌</h4>
             <p class="dim-hint">Choose a quick preset or type your custom message:</p>
